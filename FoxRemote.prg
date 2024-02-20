@@ -1,3 +1,33 @@
+Local loDB, lcDriver, lcServer, lcDatabase, lcUser, lcPassword, lcEngine, lnPort
+
+lcDriver = "MySQL ODBC 8.0 ANSI Driver"
+lcServer = "localhost"
+lcDatabase = "pepe"
+lcUser = "root"
+lcPassWord = "1234"
+
+loDB = CreateObject("MySQL")
+loDB.cPKName = "unique_id"
+loDB.bUseCA = .T.
+loDB.cDriver = lcDriver
+loDB.cServer = lcServer
+loDB.cDatabase = lcDatabase
+loDB.cUser = lcUser
+loDB.cPassword = lcPassWord
+IF !EMPTY(lnPort)
+	loDB.nPort = lnPort
+ENDIF
+ 
+If !loDB.connect()
+	Return
+ENDIF
+
+lcFileName = "C:\Users\irwin.SBSOFTWARE.000\Downloads\Irwin.dbf"
+If loDB.migrate(lcFileName)
+	MessageBox("Proceso Finalizado...!")
+Endif
+
+Release loDB
 * ======================================================================== *
 * Class DBEngine
 * ======================================================================== *
@@ -16,7 +46,6 @@ Define Class DBEngine As Custom
 	nMaxLength  = 0 && Every engine should fill this value.
 	bCanGenerateGUID = .T.
 	
-	
 	Dimension aCustomArray[1]
 	Hidden nCounter
 	nCounter = 0
@@ -29,7 +58,7 @@ Define Class DBEngine As Custom
 	cLastError = ''
 
 	Hidden oRegEx, oViews, oGroupViews, nHandle
-
+	
 	Procedure Init
 		With This
 			.oViews = Createobject("Collection")
@@ -40,6 +69,19 @@ Define Class DBEngine As Custom
 			.nHandle = 0
 		Endwith
 	Endproc
+
+
+*!*		Function connectFromKvp(toKvp, tcConfigFile)
+*!*			If type('toKvp') == 'O' and Lower(toKvp.name) == 'kvp'
+*!*				toKvp.parse(tcConfigFile)
+*!*				This.cDriver 	= Strconv(toKvp.Get('driver'),14)
+*!*				This.cServer 	= Strconv(toKvp.Get('server'),14)
+*!*				This.cUser		= Strconv(toKvp.Get('user'),14)
+*!*				This.cPassword	= Strconv(toKvp.Get('password'),14)
+*!*				This.nPort		= Strconv(toKvp.Get('port'),14)
+*!*				This.cDatabase	= Strconv(toKvp.Get('database'),14)
+*!*			EndIf	
+*!*		EndFunc
 
 	function Connect(tbAddDatabase)
 		If This.nHandle > 0
@@ -120,14 +162,15 @@ Define Class DBEngine As Custom
 			Release laDBFList
 		Else
 			If !InList(Upper(JustExt(tcTableOrPath)), "DBC", "DBF")
-				Local lcMsg
-				Text to lcMsg noshow pretext 7 textmerge
-				    Error - Tipo de Archivo InvÃ¡lido:
+				Text to this.cLastError noshow pretext 7 textmerge
+				    Error - Tipo de Archivo Inválido:
 				    Solo se permiten migraciones de ficheros DBF o DBC.
 
-				    Por favor, asegÃºrate de que estÃ¡s intentando migrar un archivo con una extensiÃ³n vÃ¡lida (DBF, DBC o TMG).
-				endtext
-				MessageBox(lcMsg, 16)
+				    Por favor, asegúrate de que estás intentando migrar un archivo con una extensión válida (DBF, DBC o TMG).
+				EndText
+				If this.bShowErrors
+					MessageBox(this.cLastError, 16)
+				EndIf
 				Return .f.
 			EndIf
 
@@ -270,18 +313,19 @@ Define Class DBEngine As Custom
 			
 			* Validate types with mandatory length
 			If InList(Upper(loFields.Type), 'C') and Empty(Val(loFields.Size))
-				Local lcMsg
-				Text to lcMsg noshow pretext 7 textmerge
+				Text to this.cLastError noshow pretext 7 textmerge
 				    Error - Tipo de Dato CHAR sin Longitud:
 
-				    El tipo de dato CHAR requiere que se especifique su longitud. Por favor, asegÃºrate de agregar la longitud despuÃ©s del tipo de dato CHAR en la definiciÃ³n de la columna.
+				    El tipo de dato CHAR requiere que se especifique su longitud. Por favor, asegúrate de agregar la longitud después del tipo de dato CHAR en la definición de la columna.
 
 				    Ejemplo Correcto:
 				    NOMBRE CHAR(50)
 
-				    Por favor, corrige la definiciÃ³n de la tabla para incluir la longitud del tipo CHAR y vuelve a intentarlo.
-				endtext
-				MessageBox(lcMsg, 48)
+				    Por favor, corrige la definición de la tabla para incluir la longitud del tipo CHAR y vuelve a intentarlo.
+				EndText
+				If this.bShowErrors
+					MessageBox(this.cLastError, 48)
+				EndIf
 				loop
 			EndIf
 && --> IRODG 16/01/2024
@@ -330,7 +374,7 @@ Define Class DBEngine As Custom
 		Text to lcHeader noshow pretext 7 textmerge
 -- =======================================
 -- Tabla: <<tcTableName>>
--- DescripciÃ³n: <<tcTableDescription>>
+-- Descripción: <<tcTableDescription>>
 -- =======================================
 		EndText
 		
@@ -350,7 +394,7 @@ Define Class DBEngine As Custom
 		cValue = ''
 		
 		If !this.bExecuteFkScriptSeparately
-			* Agregamos las claves forÃ¡neas
+			* Agregamos las claves foráneas
 			If loFkScript.count > 0
 				For each cValue in loFkScript
 					lcScript = lcScript + ',' + cValue
@@ -360,7 +404,7 @@ Define Class DBEngine As Custom
 		
 		If !this.bExecuteIndexScriptSeparately
 			cValue = ''
-			* Agregamos los Ã­ndices individuales
+			* Agregamos los índices individuales
 			If loIdxScript.count > 0
 				For each cValue in loIdxScript
 					lcScript = lcScript + ',' + cValue
@@ -369,7 +413,7 @@ Define Class DBEngine As Custom
 
 			If loComposedScripts.count > 0
 				cValue = ''
-				* Si tenemos Ã­ndices compuestos tambiÃ©n los agregamos
+				* Si tenemos índices compuestos también los agregamos
 				For each cValue in loComposedScripts
 					lcScript = lcScript + ',' + cValue
 				EndFor
@@ -393,7 +437,7 @@ Define Class DBEngine As Custom
 
 		If this.bExecuteFkScriptSeparately
 			cValue = ''
-			* Agregamos las claves forÃ¡neas
+			* Agregamos las claves foráneas
 			If loFkScript.count > 0
 				For each cValue in loFkScript
 					If Type('toScripts') == 'O'
@@ -408,7 +452,7 @@ Define Class DBEngine As Custom
 		If this.bExecuteIndexScriptSeparately
 			cValue = ''
 			If loIdxScript.count > 0
-				* Ejecutamos los Ã­ndices individuales
+				* Ejecutamos los índices individuales
 				For each cValue in loIdxScript
 					If Type('toScripts') == 'O'
 						toScripts.Add(cValue + CRLF)
@@ -420,7 +464,7 @@ Define Class DBEngine As Custom
 			
 			If loComposedScripts.count > 0
 				cValue = ''
-				* Ejecutamos los Ã­ndices compuestos
+				* Ejecutamos los índices compuestos
 				For each cValue in loComposedScripts
 					If Type('toScripts') == 'O'
 						toScripts.Add(cValue + CRLF)
@@ -442,14 +486,15 @@ Define Class DBEngine As Custom
 		EndIf
 
 		If !This.tableExists(lcSqlTableName)
-			Local lcMsg
-			Text to lcMsg noshow pretext 7 textmerge
+			Text to this.cLastError noshow pretext 7 textmerge
 			    Error - Tabla Inexistente:
 			    La tabla con el nombre '<<lcSqlTableName>>' no existe en la base de datos.
 
-			    Por favor, asegÃºrate de que el nombre de la tabla estÃ© escrito correctamente y que la tabla haya sido creada previamente en la base de datos.
-			endtext
-			MessageBox(lcMsg, 16)
+			    Por favor, asegúrate de que el nombre de la tabla esté escrito correctamente y que la tabla haya sido creada previamente en la base de datos.
+			EndText
+			If this.bShowErrors
+				MessageBox(this.cLastError, 16)
+			EndIf
 			Return .f.
 		Endif
 
@@ -470,7 +515,7 @@ Define Class DBEngine As Custom
 			loView.KeyFieldList = lcPrimaryKey
 			loView.SendUpdates = !tbReadOnly
 
-			* Traer solo estructura para extraer informaciÃ³n de las columnas.
+			* Traer solo estructura para extraer información de las columnas.
 			loView.Nodata = .T.
 			If !loView.CursorFill()
 				this.sqlError()
@@ -514,11 +559,15 @@ Define Class DBEngine As Custom
 			=CursorSetProp("FetchSize", -1, lcAlias)
 			* Esperar hasta completar todos los registros para eviar error 'Connection is Busy'
 			Do While SQLGetprop(This.nHandle, "ConnectBusy")
-				Wait Window "Recuperando informaciÃ³n de la tabla actual, espere..."  Nowait				
-				=Inkey(0.3, "H")				
-				Doevents				
+				If this.bShowErrors
+					Wait Window "Recuperando información de la tabla actual, espere..."  Nowait				
+				EndIf
+				=Inkey(0.3, "H")
+				Doevents		
 			EndDo			
-			Wait Clear
+			If this.bShowErrors
+				Wait Clear
+			EndIf
 			Go top in (lcAlias)
 		Else
 			If !This.SQLExec(lcSelectCMD, lcAlias)
@@ -880,16 +929,19 @@ Define Class DBEngine As Custom
 				Acopy(laError, this.aLastError)
 				Text to this.cLastError noshow pretext 7 textmerge
 				    ERROR - Error en la Consulta SQL:
-				    CÃ³digo de Error: <<laError[1]>>
+				    Código de Error: <<laError[1]>>
 				    Mensaje de Error: <<Transform(laError[2]) + Transform(laError[3])>>
-				    Por favor, revisa la consulta SQL y asegÃºrate de que estÃ© correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean vÃ¡lidos y vuelve a intentarlo.
-				endtext
+				    Por favor, revisa la consulta SQL y asegúrate de que esté correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+				EndText				
 				If this.bShowErrors
 					MessageBox(this.cLastError, 16)
 				EndIf
 			EndIf
 		Catch to loEx
-			MessageBox(loEx.Message, 16)
+			this.cLastError = loEx.Message
+			If this.bShowErrors
+				MessageBox(this.cLastError, 16)
+			EndIf
 		endtry
 	Endproc
 
@@ -1049,22 +1101,23 @@ Define Class DBEngine As Custom
 	EndFunc
 
 	Hidden Procedure printException(toError)
-		Local lcMsg
-		Text to lcMsg noshow pretext 7 textmerge
-		    ERROR - ExcepciÃ³n Controlada:
+		Text to this.cLastError noshow pretext 7 textmerge
+		    ERROR - Excepción Controlada:
 
-		    CÃ³digo de Error: <<toError.ErrorNo>>
-		    LÃ­nea No.: <<toError.Lineno>>
+		    Código de Error: <<toError.ErrorNo>>
+		    Línea No.: <<toError.Lineno>>
 		    Mensaje: <<toError.Message>>
 		    Procedimiento: <<toError.Procedure>>
 		    Detalles: <<toError.Details>>
 		    Nivel de Pila: <<toError.StackLevel>>
-		    Contenido de la LÃ­nea: <<toError.LineContents>>
+		    Contenido de la Línea: <<toError.LineContents>>
 		    Valor de Usuario: <<toError.UserValue>>
 
-		    Por favor, toma nota de la informaciÃ³n proporcionada y contacta al equipo de soporte para obtener asistencia adicional en la resoluciÃ³n de este problema.
-		endtext
-		Messagebox(lcMsg, 16)
+		    Por favor, toma nota de la información proporcionada y contacta al equipo de soporte para obtener asistencia adicional en la resolución de este problema.
+		EndText
+		If this.bShorErrors
+			Messagebox(this.cLastError, 16)
+		EndIf
 	Endproc
 
 	Procedure disconnect
@@ -1435,7 +1488,7 @@ Define Class MSSQL As DBEngine
 		If tbAddDatabase
 			lcConStr = lcConStr + ";DATABASE=" + Alltrim(This.cDatabase)
 		Endif
-
+		lcConStr = lcConStr + ";APP=" + this.name + " by FoxRemote"
 		Return lcConStr
 	Endfunc
 
@@ -1468,15 +1521,16 @@ Define Class MSSQL As DBEngine
 
 	Procedure selectDatabase
 		If Empty(this.cDatabase)
-			Local lcMsg
-			Text to lcMsg noshow pretext 7 textmerge
+			Text to this.cLastError noshow pretext 7 textmerge
 			    ERROR - Base de Datos No Especificada:
 
-			    Antes de realizar esta peticiÃ³n, asegÃºrate de haber seleccionado una base de datos para trabajar.
+			    Antes de realizar esta petición, asegúrate de haber seleccionado una base de datos para trabajar.
 
-			    Por favor, selecciona una base de datos vÃ¡lida y vuelve a intentar la operaciÃ³n.
-			endtext
-			Messagebox(lcMsg, 16, "Error: Base de Datos No Especificada")
+			    Por favor, selecciona una base de datos válida y vuelve a intentar la operación.
+			EndText
+			If this.bShowErrors
+				Messagebox(this.cLastError, 16, "Error: Base de Datos No Especificada")
+			EndIf
 			Return
 		EndIf
 		This.SQLExec("use " + This.cDatabase)
@@ -1716,13 +1770,14 @@ Define Class MSSQL As DBEngine
 
 	function changeDB(tcNewDatabase)
 		If Empty(tcNewDatabase)
-		    Local lcMsg
-		    Text to lcMsg noshow pretext 7 textmerge
+		    Text to this.cLastError noshow pretext 7 textmerge
 		        ERROR - Base de Datos No Especificada:
 
-		        No has especificado el nombre de la base de datos que deseas utilizar. Por favor, asegÃºrate de proporcionar el nombre de la base de datos y vuelve a intentarlo.
-		    endtext
-		    MessageBox(lcMsg, 16)
+		        No has especificado el nombre de la base de datos que deseas utilizar. Por favor, asegúrate de proporcionar el nombre de la base de datos y vuelve a intentarlo.
+		    EndText
+		    If this.bShowErrors
+			    MessageBox(this.cLastError, 16)
+			EndIf
 		    Return .f.
 		Endif
 		This.cDatabase = tcNewDatabase
@@ -1878,7 +1933,8 @@ Define Class MySQL As DBEngine
 		If tbAddDatabase
 			lcConStr = lcConStr + ";DATABASE=" + Alltrim(This.cDatabase)
 		EndIf
-		lcConStr = lcConStr + ";COLLATION=utf8_general_ci;"
+		lcConStr = lcConStr + ";COLLATION=utf8_general_ci"
+		lcConStr = lcConStr + ";APP=" + this.name + " by FoxRemote"
 		Return lcConStr
 	Endfunc
 
@@ -1911,7 +1967,10 @@ Define Class MySQL As DBEngine
 
 	Procedure selectDatabase
 		IF NOT This.SQLExec("use " + This.cDatabase)
-			MESSAGEBOX("No se pudo seleccionar la base de datos: '" + this.cDatabase + "'", 16, "Error")
+			this.cLastError = "No se pudo seleccionar la base de datos: '" + this.cDatabase + "'"
+			If this.bShowErrors
+				MESSAGEBOX(this.cLastError, 16, "Error")
+			EndIf
 			RETURN .f.
 		ENDIF
 	Endproc
@@ -2003,7 +2062,7 @@ Define Class MySQL As DBEngine
 		Set Century On
 		Set Mark To '-'
 		
-		* Deshabilitar la validaciÃ³n de claves forÃ¡neas
+		* Deshabilitar la validación de claves foráneas
 		this.sqlexec("SET FOREIGN_KEY_CHECKS=0;")
 
 		Return loEnv
@@ -2019,7 +2078,7 @@ Define Class MySQL As DBEngine
 		Set Century &lcCentury
 		Set Mark to (lcMark)
 
-		* Habilitar la validaciÃ³n de claves forÃ¡neas
+		* Habilitar la validación de claves foráneas
 		this.sqlexec("SET FOREIGN_KEY_CHECKS=1;")
 
 	endproc
@@ -2159,13 +2218,14 @@ Define Class MySQL As DBEngine
 
 	Function changeDB(tcNewDatabase)
 		If Empty(tcNewDatabase)
-		    Local lcMsg
-		    Text to lcMsg noshow pretext 7 textmerge
+		    Text to this.cLastError noshow pretext 7 textmerge
 		        ERROR - Base de Datos No Especificada:
 
-		        No has especificado el nombre de la base de datos que deseas utilizar. Por favor, asegÃºrate de proporcionar el nombre de la base de datos y vuelve a intentarlo.
-		    endtext
-		    MessageBox(lcMsg, 16)
+		        No has especificado el nombre de la base de datos que deseas utilizar. Por favor, asegúrate de proporcionar el nombre de la base de datos y vuelve a intentarlo.
+		    EndText
+		    If this.bShowErrors
+			    MessageBox(this.cLastError, 16)
+			EndIf
 		    Return .f.
 		Endif
 		This.cDatabase = tcNewDatabase
@@ -2329,8 +2389,8 @@ Define Class Firebird As DBEngine
 
     Function getConnectionString(tbAddDatabase)
         Local lcConStr, lcPort
-        lcConStr = "DRIVER=" + this.cDriver + ";DBNAME=" + This.cDatabase + ";UID=" + This.cUser + ";PWD=" + This.cPassword + ";"
-
+        lcConStr = "DRIVER=" + this.cDriver + ";DBNAME=" + This.cDatabase + ";UID=" + This.cUser + ";PWD=" + This.cPassword
+		lcConStr = lcConStr + ";APP=" + this.name + " by FoxRemote"
         Return lcConStr
     Endfunc
 
@@ -2662,24 +2722,26 @@ Define Class Firebird As DBEngine
 
 	function changeDB(tcNewDatabase)
 		If Empty(tcNewDatabase)
-		    Local lcMsg
-		    Text to lcMsg noshow pretext 7 textmerge
+		    Text to this.cLastError noshow pretext 7 textmerge
 		        ERROR - Base de Datos No Especificada:
 
-		        No has especificado el nombre de la base de datos que deseas utilizar. Por favor, asegÃºrate de proporcionar el nombre de la base de datos y vuelve a intentarlo.
-		    endtext
-		    MessageBox(lcMsg, 16)
+		        No has especificado el nombre de la base de datos que deseas utilizar. Por favor, asegúrate de proporcionar el nombre de la base de datos y vuelve a intentarlo.
+		    EndText
+		    If this.bShowErrors
+			    MessageBox(this.cLastError, 16)
+			EndIf
 		    Return .f.
 		Endif
 
 		If !File(tcNewDatabase)
-		    Local lcMsg
-		    Text to lcMsg noshow pretext 7 textmerge
+		    Text to this.cLastError noshow pretext 7 textmerge
 		        ERROR - Base de Datos Inexistente:
 
 		        La base de datos con el nombre '<<tcNewDatabase>>' no existe o no se puede encontrar en el sistema de archivos local. Por favor, verifica que el nombre de la base de datos sea correcto y que la base de datos haya sido creada previamente.
-		    endtext
-		    MessageBox(lcMsg, 16)
+		    EndText
+		    If this.bShowErrors
+			    MessageBox(this.cLastError, 16)
+			EndIf
 		    Return
 		Endif
 
@@ -2815,6 +2877,7 @@ Define Class SQLite As DBEngine
 			TimeOut=1000;
 			NoTXN=0;
 			SyncPragma=NORMAL;
+			Client=<<this.name>> by FoxRemote;
 			StepAPI=0
 		endtext
 
@@ -2823,20 +2886,20 @@ Define Class SQLite As DBEngine
 
 	Procedure beginTransaction
 *!*			This.SQLExec("COMMIT;")
-*!*			* Desactivar las transacciones automÃ¡ticas
+*!*			* Desactivar las transacciones automáticas
 *!*			this.SQLExec("PRAGMA autocommit = 0;")
 *!*			This.SQLExec("BEGIN;")
 	Endproc
 
 	Procedure endTransaction
 *!*			This.SQLExec("COMMIT;")
-*!*			* Activar las transacciones automÃ¡ticas
+*!*			* Activar las transacciones automáticas
 *!*			this.SQLExec("PRAGMA autocommit = 1;")
 	Endproc
 
 	Procedure cancelTransaction
 *!*			This.SQLExec("ROLLBACK;")
-*!*			* Activar las transacciones automÃ¡ticas
+*!*			* Activar las transacciones automáticas
 *!*			this.SQLExec("PRAGMA autocommit = 1;")
 	Endproc
 
@@ -3108,24 +3171,26 @@ Define Class SQLite As DBEngine
 
 	function changeDB(tcNewDatabase)
 		If Empty(tcNewDatabase)
-		    Local lcMsg
-		    Text to lcMsg noshow pretext 7 textmerge
+		    Text to this.cLastError noshow pretext 7 textmerge
 		        ERROR - Base de Datos No Especificada:
 
-		        No has especificado el nombre de la base de datos que deseas utilizar. Por favor, asegÃºrate de proporcionar el nombre de la base de datos y vuelve a intentarlo.
-		    endtext
-		    MessageBox(lcMsg, 16)
+		        No has especificado el nombre de la base de datos que deseas utilizar. Por favor, asegúrate de proporcionar el nombre de la base de datos y vuelve a intentarlo.
+		    EndText
+		    If this.bShowErrors
+			    MessageBox(this.cLastError, 16)
+			EndIf
 		    Return .f.
 		Endif
 
 		If !File(tcNewDatabase)
-		    Local lcMsg
-		    Text to lcMsg noshow pretext 7 textmerge
+		    Text to this.cLastError noshow pretext 7 textmerge
 		        ERROR - Base de Datos Inexistente:
 
 		        La base de datos con el nombre '<<tcNewDatabase>>' no existe o no se puede encontrar en el sistema de archivos local. Por favor, verifica que el nombre de la base de datos sea correcto y que la base de datos haya sido creada previamente.
-		    endtext
-		    MessageBox(lcMsg, 16)
+		    EndText
+		    If this.bShowErrors
+			    MessageBox(this.cLastError, 16)
+			EndIf
 		    Return
 		Endif
 
@@ -3251,7 +3316,7 @@ EndDefine
 Define Class PostgreSQL As DBEngine
 
     Procedure init
-        DoDefault()    
+		DoDefault()    
         this.nMaxLength = 63
         this.cLeft = '"'
         this.cRight = '"'
@@ -3282,6 +3347,7 @@ Define Class PostgreSQL As DBEngine
 			PORT=<<Iif(Empty(this.nPort), "5432", this.nPort)>>;
 			UID=<<Iif(Empty(this.cUser),'', this.cUser)>>;
 			PWD=<<Iif(Empty(this.cPassword),'', this.cPassword)>>;
+			APP=<<this.name>> by FoxRemote
 		endtext
 		If tbAddDatabase
 			lcConStr = lcConStr + "DATABASE=" + Alltrim(This.cDatabase)
@@ -3367,12 +3433,14 @@ Define Class PostgreSQL As DBEngine
     	If this.sqlExec('CREATE EXTENSION IF NOT EXISTS "uuid-ossp";')
 	        Return "SELECT uuid_generate_v4() AS GUID"
 	    EndIf
-	    Text to lcMsg noshow pretext 7
-	    Hubo un problema con la extensiÃ³n 'uuid-ossp'.
-	    Por favor, asegÃºrate de que la extensiÃ³n estÃ¡ instalada y habilitada en tu servidor de base de datos.
-	    Si necesitas ayuda, consulta la documentaciÃ³n o contacta al administrador de la base de datos.
-	    endtext
-	    MessageBox(lcMsg, 48, "DBCraft")
+	    Text to this.cLastError noshow pretext 7
+	    Hubo un problema con la extensión 'uuid-ossp'.
+	    Por favor, asegúrate de que la extensión está instalada y habilitada en tu servidor de base de datos.
+	    Si necesitas ayuda, consulta la documentación o contacta al administrador de la base de datos.
+	    EndText
+	    If this.bShowErrors
+		    MessageBox(this.cLastError, 48, "DBCraft")
+		EndIf
     EndFunc
     
     Function getTablesScript
@@ -3446,7 +3514,10 @@ Define Class PostgreSQL As DBEngine
 		Set Mark To '-'
 
     	If !this.sqlExec('CREATE EXTENSION IF NOT EXISTS "uuid-ossp";')
-	        messagebox("Hubo un problema con la extensiÃ³n 'uuid-ossp'. Por favor, asegÃºrate de que la extensiÃ³n estÃ¡ instalada y habilitada en tu servidor de base de datos. Si necesitas ayuda, consulta la documentaciÃ³n o contacta al administrador de la base de datos.", 48)
+    		this.cLastError = "Hubo un problema con la extensión 'uuid-ossp'. Por favor, asegúrate de que la extensión está instalada y habilitada en tu servidor de base de datos. Si necesitas ayuda, consulta la documentación o contacta al administrador de la base de datos."
+    		If this.bShowErrors
+		        messagebox(this.cLastError, 48)
+		    EndIf
 	    EndIf	    
 
 		Return loEnv
@@ -3607,13 +3678,14 @@ Define Class PostgreSQL As DBEngine
 
 	function changeDB(tcNewDatabase)
 		If Empty(tcNewDatabase)
-		    Local lcMsg
-		    Text to lcMsg noshow pretext 7 textmerge
+		    Text to this.cLastError noshow pretext 7 textmerge
 		        ERROR - Base de Datos No Especificada:
 
-		        No has especificado el nombre de la base de datos que deseas utilizar. Por favor, asegÃºrate de proporcionar el nombre de la base de datos y vuelve a intentarlo.
-		    endtext
-		    MessageBox(lcMsg, 16)
+		        No has especificado el nombre de la base de datos que deseas utilizar. Por favor, asegúrate de proporcionar el nombre de la base de datos y vuelve a intentarlo.
+		    EndText
+		    If this.bShowErrors
+			    MessageBox(this.cLastError, 16)
+			EndIf
 		    Return .f.
 		Endif
 

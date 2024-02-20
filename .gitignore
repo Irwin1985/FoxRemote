@@ -1,0 +1,12 @@
+
+*.BAK
+*.FXP
+*.txt
+*.SCT
+*.scx
+handlertest.prg
+CONFIG.FPW
+main.prg
+Sample.PJT
+Sample.pjx
+test.prg
