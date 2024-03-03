@@ -1,38 +1,12 @@
-Local loDB, lcDriver, lcServer, lcDatabase, lcUser, lcPassword, lcEngine, lnPort
-
-lcDriver = "MySQL ODBC 8.0 ANSI Driver"
-lcServer = "localhost"
-lcDatabase = "pepe"
-lcUser = "root"
-lcPassWord = "1234"
-
-loDB = CreateObject("MySQL")
-loDB.cPKName = "unique_id"
-loDB.bUseCA = .T.
-loDB.cDriver = lcDriver
-loDB.cServer = lcServer
-loDB.cDatabase = lcDatabase
-loDB.cUser = lcUser
-loDB.cPassword = lcPassWord
-IF !EMPTY(lnPort)
-	loDB.nPort = lnPort
-ENDIF
- 
-If !loDB.connect()
-	Return
-ENDIF
-
-lcFileName = "C:\Users\irwin.SBSOFTWARE.000\Downloads\Irwin.dbf"
-If loDB.migrate(lcFileName)
-	MessageBox("Proceso Finalizado...!")
-Endif
-
-Release loDB
 * ======================================================================== *
 * Class DBEngine
 * ======================================================================== *
 Define Class DBEngine As Custom
 	#DEFINE CRLF CHR(13)+CHR(10)
+	Hidden cDirTemp && Temporary path for creating database
+	Hidden cDBCFile && Database container location
+	Hidden cDBCName && Database container name	
+	Hidden cConName
 	cDriver		= ""
 	cServer		= ""
 	cUser		= ""
@@ -40,7 +14,8 @@ Define Class DBEngine As Custom
 	cDatabase 	= ""
 	nPort		= 0
 	cVersion	= "0.0.1"
-	bUseCA		= .T.
+	bUseCA		= .F.
+	bUseDBC		= .F.
 	bUseSymbolDelimiter = .F.
 	cPKName		= "TID"	
 	nMaxLength  = 0 && Every engine should fill this value.
@@ -68,8 +43,39 @@ Define Class DBEngine As Custom
 			.oRegEx.Global = .T.
 			.nHandle = 0
 		Endwith
-	Endproc
+	endproc
 
+	hidden function createDBC
+		this.cDirTemp = Addbs(sys(2023)) && temporary path
+		If Directory(this.cDirTemp)
+			this.cDBCName = "QuickDB" + Sys(2015)
+			this.cConName = "QuickDBCon" + Sys(2015)
+			this.cDBCFile = this.cDirTemp + this.cDBCName + ".dbc"
+			this.deletePreviousDatabases()
+			Create Database (this.cDBCFile)
+		else
+			this.cLastError = "Directorio temporal inexistente: " + Transform(this.cDirTemp)
+			if this.bShowErrors				
+				Messagebox(this.cLastError, 16, "QuickDB")
+			endif
+		endif
+	endfunc
+
+	Procedure deletePreviousDatabases
+		&& Delete previous .dbc files created with this library.
+		Try
+			Erase This.cDirTemp + "QuickDB*.dbc"
+		Catch
+		Endtry
+		Try
+			Erase This.cDirTemp + "QuickDB*.dct"
+		Catch
+		Endtry
+		Try
+			Erase This.cDirTemp + "QuickDB*.dcx"
+		Catch
+		Endtry
+	Endproc
 
 *!*		Function connectFromKvp(toKvp, tcConfigFile)
 *!*			If type('toKvp') == 'O' and Lower(toKvp.name) == 'kvp'
@@ -100,7 +106,17 @@ Define Class DBEngine As Custom
 		If This.nHandle <= 0
 			This.sqlError()
 			Return .f.
-		Endif
+		endif
+		
+		if this.bUseDBC
+			if !this.createDBC()
+				return
+			endif
+			lcConStr = This.getConnectionString(.t.)
+			Create Connection (this.cConName) Connstring (lcConStr)
+			set database to (this.cDBCName)
+		endif
+		
 		This.applyConnectionSettings()
 		
 		If tbAddDatabase
@@ -484,7 +500,7 @@ Define Class DBEngine As Custom
 		If Used(lcAlias)
 			Return .f.
 		EndIf
-
+		
 		If !This.tableExists(lcSqlTableName)
 			Text to this.cLastError noshow pretext 7 textmerge
 			    Error - Tabla Inexistente:
@@ -501,9 +517,18 @@ Define Class DBEngine As Custom
 		Local lcPrimaryKey, lcSelectCMD, loView
 		
 		lcPrimaryKey = this.getKeyField(lcSqlTableName)
-		lcSelectCMD = this.getSelectCommand(lcSqlTableName, tcFields, tcCriteria)
+		if empty(lcPrimaryKey)
+			this.cLastError = "La tabla '" + lcSqlTableName + "' no tiene clave primaria definida."
+			if !this.bShowErrors
+				messagebox(this.cLastError, 16, "FoxRemote")				
+			endif
+			return
+		endif
 
-		If this.bUseCA
+		lcSelectCMD = this.getSelectCommand(lcSqlTableName, tcFields, tcCriteria, lcPrimaryKey)
+
+		do case
+		case this.bUseCA
 			Local i, lcUpdaTableFieldList, lcUpdateNameList, lcField, laFields[1], lcSchemaList
 			loView = Createobject('CursorAdapter')
 			=AddProperty(loView, "Database", this.cDatabase)
@@ -527,6 +552,9 @@ Define Class DBEngine As Custom
 
 			For i=1 To Afields(laFields)
 				lcField = laFields[i,1]
+*!*					if lower(lcField) == lower(lcPrimaryKey)
+*!*						loop
+*!*					endif
 				lcUpdaTableFieldList = lcUpdaTableFieldList + lcField + ','
 				lcUpdateNameList = lcUpdateNameList + lcField + Space(1) + lcSqlTableName + '.' + lcField + ','
 
@@ -569,7 +597,49 @@ Define Class DBEngine As Custom
 				Wait Clear
 			EndIf
 			Go top in (lcAlias)
-		Else
+		case this.bUseDBC
+			If Indbc(lcAlias, "VIEW")
+				Drop View (lcAlias)
+			endif
+			Set Database To (This.cDBCName)
+			*CursorSetProp("MapBinary",.T.,0)
+			Create View (lcAlias) Connection (This.cConName) As &lcSelectCMD
+			DBSetProp(lcAlias, "VIEW", "SendUpdates", .T.)
+			DBSetProp(lcAlias, "VIEW", "FetchAsNeed", .F.) 	&& Fetch all data at once.
+			DBSetProp(lcAlias, "VIEW", "FetchSize", -1) 	&& -1 all data at once.
+			DBSetProp(lcAlias, "VIEW", "ShareConnection", .T.)
+			
+			DBSetProp(lcAlias+ '.' + lcPrimaryKey, "FIELD", "KeyField", .T.)
+			* ----------------------------
+			* Make all fields updatables.
+			select 0
+			if tbNodata
+				Use (lcAlias) nodata
+			else
+				use (lcAlias)
+			endif
+			Local lnFields, lbUpdatable
+			Local Array laFields[1]
+			lnFields = Afields(laFields)
+			For i = 1 To lnFields
+				lbUpdatable = .T.
+				if lower(laFields[i,1]) == lower(lcPrimaryKey)
+					lbUpdatable = .F.
+				endif
+				DBSetProp(lcAlias+ '.' + laFields[i,1], "Field", "Updatable", lbUpdatable)
+			Endfor
+			loView = Createobject('RemoteCursor')
+			With loView
+				.Database = This.cDatabase
+				.Alias = lcAlias
+				.SelectCmd = lcSelectCMD
+				.Tables = lcSqlTableName
+				.KeyFieldList = lcPrimaryKey
+				.SendUpdates = !tbReadOnly
+				.Nodata = tbNodata
+			EndWith
+			* ----------------------------
+		otherwise
 			If !This.SQLExec(lcSelectCMD, lcAlias)
 				Return .F.
 			Endif
@@ -584,7 +654,7 @@ Define Class DBEngine As Custom
 				.SendUpdates = !tbReadOnly
 				.Nodata = tbNodata
 			EndWith
-		EndIf
+		Endcase
 		If !tbReadOnly
 			=CursorSetProp("Buffering", 5, lcAlias)
 		EndIf
@@ -1010,14 +1080,18 @@ Define Class DBEngine As Custom
 		Return this.cPKName
 	EndFunc 
 
-	Hidden function getSelectCommand(tcTable, tcFields, tcCriteria)
+	Hidden function getSelectCommand(tcTable, tcFields, tcCriteria, tcPrimaryKey)
 		Local lcLeft, lcRight, lcCommand
-		lcLeft = this.cLeft
+		lcLeft  = this.cLeft
 		lcRight = this.cRight
 
 		If Empty(tcFields)
 			tcFields = "*"
-		EndIf
+		else
+			if empty(at(lower(tcPrimaryKey), lower(tcFields)))
+				tcFields = tcPrimaryKey + ',' + tcFields
+			endif
+		endif
 
 		lcCommand = "SELECT " + tcFields + " FROM " + lcLeft + tcTable + lcRight
 		If !Empty(tcCriteria)
@@ -1080,6 +1154,7 @@ Define Class DBEngine As Custom
 
 	Hidden Procedure applyConnectionSettings
 		Set Multilocks On
+		SQLSetprop(This.nHandle, 'DispWarnings', .F.)
 		SQLSetprop(This.nHandle, 'DisconnectRollback', .T.)
 		SQLSetprop(This.nHandle, 'DispWarnings', .F.)
 		SQLSetprop(This.nHandle, 'Asynchronous', .F.)
