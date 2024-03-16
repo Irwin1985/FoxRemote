@@ -518,11 +518,11 @@ Define Class DBEngine As Custom
 		
 		lcPrimaryKey = this.getKeyField(lcSqlTableName)
 		if empty(lcPrimaryKey)
-			this.cLastError = "La tabla '" + lcSqlTableName + "' no tiene clave primaria definida."
+			this.cLastError = "La tabla '" + lcSqlTableName + "' no tiene clave primaria definida. Se abrirá en modo lectura."
 			if !this.bShowErrors
 				messagebox(this.cLastError, 16, "FoxRemote")				
 			endif
-			return
+*!*				return
 		endif
 
 		lcSelectCMD = this.getSelectCommand(lcSqlTableName, tcFields, tcCriteria, lcPrimaryKey)
@@ -538,7 +538,7 @@ Define Class DBEngine As Custom
 			loView.SelectCmd = lcSelectCMD
 			loView.Tables = lcSqlTableName
 			loView.KeyFieldList = lcPrimaryKey
-			loView.SendUpdates = !tbReadOnly
+			loView.SendUpdates = IIF(empty(lcPrimaryKey),.f.,!tbReadOnly)
 
 			* Traer solo estructura para extraer información de las columnas.
 			loView.Nodata = .T.
@@ -552,9 +552,6 @@ Define Class DBEngine As Custom
 
 			For i=1 To Afields(laFields)
 				lcField = laFields[i,1]
-*!*					if lower(lcField) == lower(lcPrimaryKey)
-*!*						loop
-*!*					endif
 				lcUpdaTableFieldList = lcUpdaTableFieldList + lcField + ','
 				lcUpdateNameList = lcUpdateNameList + lcField + Space(1) + lcSqlTableName + '.' + lcField + ','
 
@@ -604,12 +601,14 @@ Define Class DBEngine As Custom
 			Set Database To (This.cDBCName)
 			*CursorSetProp("MapBinary",.T.,0)
 			Create View (lcAlias) Connection (This.cConName) As &lcSelectCMD
-			DBSetProp(lcAlias, "VIEW", "SendUpdates", .T.)
+			DBSetProp(lcAlias, "VIEW", "SendUpdates", IIF(empty(lcPrimaryKey),.f.,!tbReadOnly))
 			DBSetProp(lcAlias, "VIEW", "FetchAsNeed", .F.) 	&& Fetch all data at once.
 			DBSetProp(lcAlias, "VIEW", "FetchSize", -1) 	&& -1 all data at once.
 			DBSetProp(lcAlias, "VIEW", "ShareConnection", .T.)
 			
-			DBSetProp(lcAlias+ '.' + lcPrimaryKey, "FIELD", "KeyField", .T.)
+			IF !EMPTY(lcPrimaryKey)
+				DBSetProp(lcAlias+ '.' + lcPrimaryKey, "FIELD", "KeyField", .T.)
+			ENDIF
 			* ----------------------------
 			* Make all fields updatables.
 			select 0
@@ -635,14 +634,54 @@ Define Class DBEngine As Custom
 				.SelectCmd = lcSelectCMD
 				.Tables = lcSqlTableName
 				.KeyFieldList = lcPrimaryKey
-				.SendUpdates = !tbReadOnly
+				.SendUpdates = IIF(empty(lcPrimaryKey),.f.,!tbReadOnly)
 				.Nodata = tbNodata
 			EndWith
 			* ----------------------------
-		otherwise
-			If !This.SQLExec(lcSelectCMD, lcAlias)
+		Otherwise
+			Local lcSelectCMD2, i, lcUpdaTableFieldList, lcUpdateNameList, lcField, laFields[1], lcSchemaList
+			lcSelectCMD2 = lcSelectCMD
+			If tbNodata
+				If At(" WHERE ", lcSelectCMD) > 0
+					lcSelectCMD2 = lcSelectCMD + ' AND 1=2'
+				Else
+					lcSelectCMD2 = lcSelectCMD + ' WHERE 1=2'
+				EndIf
+			EndIf
+			If !This.SQLExec(lcSelectCMD2, lcAlias)
 				Return .F.
 			Endif
+			
+			CursorSetProp("Tables", lcSqlTableName)
+			
+			Select (lcAlias)
+			Store '' To lcUpdaTableFieldList, lcUpdateNameList, lcSchemaList
+
+			For i=1 To Afields(laFields)
+				lcField = laFields[i,1]
+				lcUpdaTableFieldList = lcUpdaTableFieldList + lcField + ','
+				lcUpdateNameList = lcUpdateNameList + lcField + Space(1) + lcSqlTableName + '.' + lcField + ','
+
+				* Schema
+				If !Empty(lcSchemaList)
+					lcSchemaList = lcSchemaList + ','
+				EndIf
+				lcSchemaList = lcSchemaList + lcField + ' ' + laFields[i,2] + ' '
+				If laFields[i,3] > 0
+					lcSchemaList = lcSchemaList + '(' + Alltrim(Str(laFields[i,3]))
+					If laFields[i,4] > 0
+						lcSchemaList = lcSchemaList + ',' + Alltrim(Str(laFields[i,3]))
+					EndIf
+					lcSchemaList = lcSchemaList + ')'
+				EndIf
+			EndFor
+			lcUpdaTableFieldList = Substr(lcUpdaTableFieldList, 1, Len(lcUpdaTableFieldList)-1) && Remove trailing comma
+			lcUpdateNameList = Substr(lcUpdateNameList, 1, Len(lcUpdateNameList)-1) 			&& Remove trailing comma
+			
+			CursorSetProp("UpdatableFieldList", lcUpdaTableFieldList, lcAlias)
+			CursorSetProp("UpdateNameList", lcUpdateNameList, lcAlias)
+			CursorSetProp("SendUpdates", IIF(empty(lcPrimaryKey),.f.,!tbReadOnly), lcAlias)
+			CursorSetProp("KeyFieldList", lcPrimaryKey, lcAlias)
 
 			loView = Createobject('RemoteCursor')
 			With loView
@@ -651,11 +690,11 @@ Define Class DBEngine As Custom
 				.SelectCmd = lcSelectCMD
 				.Tables = lcSqlTableName
 				.KeyFieldList = lcPrimaryKey
-				.SendUpdates = !tbReadOnly
+				.SendUpdates = IIF(empty(lcPrimaryKey),.f.,!tbReadOnly)
 				.Nodata = tbNodata
 			EndWith
 		Endcase
-		If !tbReadOnly
+		If !EMPTY(lcPrimaryKey) and !tbReadOnly
 			=CursorSetProp("Buffering", 5, lcAlias)
 		EndIf
 
@@ -684,11 +723,11 @@ Define Class DBEngine As Custom
 			Return .F.
 		Endif			
 		loView = This.oViews.Item(lnIndex)		
-		If this.bUseCA
+		If this.bUseCA or this.bUseDBC
 			If loView.sendUpdates
 				=Requery(tcAlias)
 			EndIf
-		Else			
+		Else
 			If loView.sendUpdates				
 				=TableRevert(.t.)
 				Delete from (tcAlias)
@@ -1085,7 +1124,7 @@ Define Class DBEngine As Custom
 		lcLeft  = this.cLeft
 		lcRight = this.cRight
 
-		If Empty(tcFields)
+		If Empty(tcFields) or tcFields == '*'
 			tcFields = "*"
 		else
 			if empty(at(lower(tcPrimaryKey), lower(tcFields)))
