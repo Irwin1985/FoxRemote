@@ -717,7 +717,11 @@ Define Class DBEngine As Custom
 					Exit
 				EndIf
 				lcTag = this.oIndexSet.Get(lcSqlTableName+ '.index' + Alltrim(Str(i)) + '.tag')
+				try
 				lcMacro = "INDEX ON &lcExpr TAG &lcTag ADDITIVE"
+				Catch to loEx
+					This.printException(loEx)
+				endtry
 				&lcMacro
 			EndDo
 		EndIf
