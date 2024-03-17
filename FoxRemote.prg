@@ -493,9 +493,13 @@ Define Class DBEngine As Custom
 		EndIf
 	endfunc
 
-	Function use(tcTable, tcFields, tcCriteria, tcGroup, tbReadOnly, tbNodata)
+	Function use(tcTable, tcFields, tcCriteria, tcGroup, tbReadOnly, tbNodata, tnSessionID)
 		Local lcSqlTableName, lcAlias
 		this.getTableAndAlias(tcTable, @lcSqlTableName, @lcAlias)
+
+		If !Empty(tnSessionID)
+			Set Datasession To (tnSessionID)
+		EndIf
 		
 		If Used(lcAlias)
 			Return .f.
@@ -694,14 +698,13 @@ Define Class DBEngine As Custom
 				.Nodata = tbNodata
 			EndWith
 		Endcase
-		If !EMPTY(lcPrimaryKey) and !tbReadOnly
-			=CursorSetProp("Buffering", 5, lcAlias)
-		EndIf
-
-		This.oViews.Add(loView, Lower(lcAlias))
+*!*			If !EMPTY(lcPrimaryKey) and !tbReadOnly
+*!*				=CursorSetProp("Buffering", 5, lcAlias)
+*!*			EndIf
+		This.oViews.Add(loView, this.getAliasName(lcAlias, tnSessionID))
 
 		If !Empty(tcGroup)
-			This.addViewToGroup(Lower(tcGroup), Lower(lcAlias))
+			This.addViewToGroup(Lower(tcGroup), this.getAliasName(lcAlias, tnSessionID))
 		EndIf
 		Select (lcAlias)
 		Return .t.
@@ -711,14 +714,18 @@ Define Class DBEngine As Custom
 		* Abstract
 	endfunc
 
-	Procedure requery(tcAlias)
+	Hidden function getAliasName(tcAlias, tnSessionID)
+		Return Lower(tcAlias) + Iif(!Empty(tnSessionID), '.'+Alltrim(Transform(tnSessionID)), '')
+	endfunc
+
+	Procedure requery(tcAlias, tnSessionID)
 		If Empty(tcAlias)
 			tcAlias = Alias()
 		EndIf
 
 		Select (tcAlias)		
 		Local lnIndex, loView, lcCursor
-		lnIndex = This.oViews.GetKey(Lower(tcAlias))
+		lnIndex = This.oViews.GetKey(this.getAliasName(tcAlias, tnSessionID))
 		If Empty(lnIndex)
 			Return .F.
 		Endif			
@@ -742,13 +749,13 @@ Define Class DBEngine As Custom
 		EndIf
 	EndProc
 
-	Procedure discard(tcAlias)
+	Procedure discard(tcAlias, tnSessionID)
 		If Empty(tcAlias)
 			tcAlias = Alias()
 		EndIf
 
 		Local lnIndex, loView, lcCursor
-		lnIndex = This.oViews.GetKey(Lower(tcAlias))
+		lnIndex = This.oViews.GetKey(this.getAliasName(tcAlias, tnSessionID))
 		If Empty(lnIndex)
 			Return .F.
 		Endif			
@@ -764,7 +771,7 @@ Define Class DBEngine As Custom
 		EndIf
 	EndFunc
 
-	function Save(tcAlias)
+	function Save(tcAlias, tnSessionID)
 		If Empty(tcAlias)
 			tcAlias = Alias()
 		Endif
@@ -773,7 +780,7 @@ Define Class DBEngine As Custom
 		lnOldTransactionSeting = SQLGetprop(This.nHandle, "Transactions")
 		=SQLSetprop(This.nHandle, "Transactions", 2) && Change to manual transactions
 
-		lnIndex = This.oViews.GetKey(Lower(tcAlias))
+		lnIndex = This.oViews.GetKey(this.getAliasName(tcAlias, tnSessionID))
 		If Empty(lnIndex)
 			Return .F.
 		Endif
@@ -878,12 +885,12 @@ Define Class DBEngine As Custom
 		Return lbOk
 	endfunc
 
-	function saveGroup(tcGroup)
+	function saveGroup(tcGroup, tnSessionID)
 		If Empty(tcGroup)
 			Return .F.
 		Endif
 		Local lnIndex, loViews, i, lbOk, loView, lcScript, lcAlias, lnOldTransactionSeting
-		lnIndex = This.oGroupViews.GetKey(Lower(tcGroup))
+		lnIndex = This.oGroupViews.GetKey(this.getAliasName(tcGroup, tnSessionID))
 		If Empty(lnIndex)
 			Return .F.
 		Endif
@@ -901,7 +908,7 @@ Define Class DBEngine As Custom
 		This.beginTransaction()
 
 		For i=1 To loViews.Count
-			lcAlias = loViews.Item(i)
+			lcAlias = this.getAliasName(loViews.Item(i), tnSessionID)
 			loView = This.oViews.Item(lcAlias)
 			If !loView.SendUpdates
 				Loop && Ignore cursor
@@ -930,7 +937,7 @@ Define Class DBEngine As Custom
 		Return lbOk
 	EndFunc
 
-	Procedure Close(tcAlias)
+	Procedure Close(tcAlias, tnSessionID)
 
 		If Empty(tcAlias)
 			tcAlias = Alias()
@@ -943,7 +950,7 @@ Define Class DBEngine As Custom
 		Local lnIndex, lcAlias, loView
 
 		* Intentamos buscar como Vista
-		lnIndex = This.oViews.GetKey(Lower(tcAlias))
+		lnIndex = This.oViews.GetKey(this.getAliasName(tcAlias, tnSessionID))
 		If Empty(lnIndex)
 			Return .F.
 		Endif
@@ -986,13 +993,13 @@ Define Class DBEngine As Custom
 		Endtry
 	Endproc
 
-	Procedure closeGroup(tcGroup)
+	Procedure closeGroup(tcGroup, tnSessionID)
 
 		If Empty(tcGroup)
 			Return .F.
 		Endif
 		Local lnIndex, loViews, i, loView, lcAlias
-		lnIndex = This.oGroupViews.GetKey(Lower(tcGroup))
+		lnIndex = This.oGroupViews.GetKey(this.getAliasName(Lower(tcGroup), tnSessionID))
 		If Empty(lnIndex)
 			Return .F.
 		Endif
@@ -1001,23 +1008,27 @@ Define Class DBEngine As Custom
 		If Empty(loViews.Count)
 			Return .F.
 		Endif
-
 		For i=1 To loViews.Count
-			lcAlias = loViews.Item(i)
+			lcAlias = this.getAliasName(loViews.Item(i), tnSessionID)
 			loView = This.oViews.Item(lcAlias)
 			Select (loView.Alias)
 			If loView.SendUpdates
 				Tablerevert(.T.)
 			Endif
 			Use
+			This.oViews.Remove(Lower(lcAlias))
 			Release loView
 		Endfor
-
+		This.oGroupViews.Remove(Lower(tcGroup))
 		Return .T.
 	Endproc
 
-	Function SQLExec(tcSQLCommand, tcCursorName)
+	Function SQLExec(tcSQLCommand, tcCursorName, tnSessionID)
 
+		If !Empty(tnSessionID)
+			Set Datasession To (tnSessionID)
+		EndIf
+		
 		If Empty(tcCursorName)
 			tcCursorName = Sys(2015)
 		Endif
