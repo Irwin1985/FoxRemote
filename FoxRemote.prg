@@ -7,6 +7,8 @@ Define Class DBEngine As Custom
 	Hidden cDBCFile && Database container location
 	Hidden cDBCName && Database container name	
 	Hidden cConName
+	Hidden oIndexSet
+
 	cDriver		= ""
 	cServer		= ""
 	cUser		= ""
@@ -38,12 +40,17 @@ Define Class DBEngine As Custom
 		With This
 			.oViews = Createobject("Collection")
 			.oGroupViews = Createobject("Collection")
+			.oIndexSet = CreateObject("Collection")
 			.oRegEx = Createobject("VBScript.RegExp")
 			.oRegEx.IgnoreCase = .T.
 			.oRegEx.Global = .T.
 			.nHandle = 0
 		Endwith
-	endproc
+	EndProc
+	
+	Procedure setIndexSet(toIndexSet as Collection)
+		this.oIndexSet = toIndexSet
+	EndProc
 
 	hidden function createDBC
 		this.cDirTemp = Addbs(sys(2023)) && temporary path
@@ -697,10 +704,27 @@ Define Class DBEngine As Custom
 				.SendUpdates = IIF(empty(lcPrimaryKey),.f.,!tbReadOnly)
 				.Nodata = tbNodata
 			EndWith
-		Endcase
-*!*			If !EMPTY(lcPrimaryKey) and !tbReadOnly
-*!*				=CursorSetProp("Buffering", 5, lcAlias)
-*!*			EndIf
+		EndCase
+		
+		If this.oIndexSet.count > 0
+			Local i, lcExpr, lcTag, lcMacro
+			Select (lcAlias)
+			i = 0
+			Do while .t.
+				i = i + 1
+				lcExpr = this.oIndexSet.Get(lcSqlTableName+ '.index' + Alltrim(Str(i)) + '.expression')
+				If Empty(lcExpr)
+					Exit
+				EndIf
+				lcTag = this.oIndexSet.Get(lcSqlTableName+ '.index' + Alltrim(Str(i)) + '.tag')
+				lcMacro = "INDEX ON &lcExpr TAG &lcTag ADDITIVE"
+				&lcMacro
+			EndDo
+		EndIf
+		
+		If !EMPTY(lcPrimaryKey) and !tbReadOnly
+			=CursorSetProp("Buffering", 5, lcAlias)
+		EndIf
 		This.oViews.Add(loView, this.getAliasName(lcAlias, tnSessionID))
 
 		If !Empty(tcGroup)
@@ -1120,7 +1144,9 @@ Define Class DBEngine As Custom
 		Else
 			tcSqlTableName = tcTable
 			tcAlias = tcTable
-		Endif
+		EndIf
+		tcSqlTableName = Alltrim(tcSqlTableName)
+		tcAlias = Alltrim(tcAlias)
 	EndProc
 	
 	Hidden function getKeyField(tcTable)
