@@ -4,3 +4,28 @@ publish*/
 node_modules/
 .claude/worktrees/
 *.log
+
+# --- Artefactos de VFP -------------------------------------------------------
+# El .FXP es el que hay que vigilar, y no por tamano: VFP ejecuta el compilado
+# cuando es mas nuevo que el fuente. Un .FXP versionado y desfasado hace que
+# alguien arregle algo, lo ejecute y NO vea el arreglo -- de los fallos mas
+# caros de diagnosticar que tiene VFP, porque todo lo que miras dice que
+# deberia funcionar.
+*.fxp
+*.FXP
+*.app
+*.APP
+
+# Copias que deja el editor de VFP al guardar.
+*.bak
+*.BAK
+
+# Registro de errores de compilacion: se reescribe en cada COMPILE.
+*.err
+*.ERR
+
+# Ruido que deja VFP al abrir la carpeta.
+foxuser.dbf
+foxuser.fpt
+foxuser.DBF
+foxuser.FPT
