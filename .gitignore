@@ -29,3 +29,5 @@ foxuser.dbf
 foxuser.fpt
 foxuser.DBF
 foxuser.FPT
+probe/engines.local.ini
+tests/.data/

@@ -1,0 +1,21 @@
+ENGINE|INFO|Firebird 5.0.4
+S1|ERROR|probe raised 13 Alias '_7KR0XNMGM' is not found. (getversion line 2346: lcVersion = &lcCursor..VER)
+N1|OK|getPrimaryKey('customers') = 'ID' (expected id); script: SELECT SEG.RDB$FIELD_NAME AS COLUMN_NAME  FROM RDB$RELATION_CONSTRAINTS CON  JOIN RDB$INDEX_SEGMENTS SEG ON CON.RDB$INDEX_NAME = SEG.RDB$INDEX_NAME  WHERE CON.RDB$RELATION_NAME = 'CUSTOMERS' AND CON.RDB$CONSTRAINT_TYPE =
+A1|OK|Save() = .T.; sent hex 5065F16120C16C7661726F208035; another connection reads hex 5065F16120C16C7661726F208035 (+ 26 trailing blanks); FoxRemote's use() reads hex 5065F16120C16C7661726F208035
+F3|OK|Connect() returned .F.; the database was not created
+F11|BUG|SET MULTILOCKS before Connect: OFF, after: ON
+F1a|BUG|Save('not_opened') = .F.; Transactions 1 -> 2; an INSERT run afterwards and then disconnect: rows on the server = 0                  
+F1b|BUG|Save(read-only) = .F.; SET DATE AMERICAN -> YMD; Transactions 1 -> 2
+F1c|OK|Save() = .T.; another connection sees the row before disconnect: 1                  ; Transactions after Save() = 1; after a SQLCOMMIT() by hand: 1                  , after disconnect: 1                  
+F12|OK|bUseCA=.F., name and city changed, Save() = .T.; on the server: f12_new/Lima                                                                      (expected f12_new/Lima), read after a SQLCOMMIT() by hand
+F2|BUG|saveGroup() = .T.; city on the server: Bonn                                     (expected Kiel)
+F5|INFO|getTables(): raised 1806 SQL: Column 'TABLE_NAME' is not found. || getTableFields('customers') (4 columns): raised 1806 SQL: Column 'COLUMN_NAME' is not found.
+F6|BUG|getLastID() raised 1734 Property GETLASTIDSCRIPT is not found.; the id inserted is 7
+F6b|BUG|getLastID() raised 1734 Property GETLASTIDSCRIPT is not found.; the id inserted is 8
+F7|BUG|closeGroup() = .T., alias open after: .F.; use() again = .F. raised 2062 The specified Key already exists.
+F8a|BUG|read-only cursor, a row inserted by another connection, requery(): rows 7 -> 7
+F8b|BUG|pending change city=Linz, another connection makes a 2nd row match, requery(): Linz kept, rows in the cursor 1 (a real requery that keeps the change gives 2 and Linz kept)
+F9|OK|use(nopk) = .T., Save() = .T., rows on the server after a SQLCOMMIT() by hand: 1                  ; cLastError: ERROR - Error en la Consulta SQL:  Código de Error: 1526  Mensaje de Error: Connectivity error: [ODBC Firebird Driver][Firebird]Dynamic SQL Error-SQL error code = -206-Column unknown-RDB$DATABASE_NAME-At line 1, column 4
+F10|BUG|user with ';' in the password '<hidden, 18 chars, has ';'=.T.>': Connect() = .F.; the value arrived whole; sanity, the same with a wrong value: Connect() = .F.; cLastError: ERROR - Error en la Consulta SQL:  Código de Error: 1526  Mensaje de Error: Connectivity error: [ODBC Firebird Driver]Your user name and password are not defined. Ask your database administrator to set up a Firebird logi
+F4a|BUG|before migrate() the server table had 1                   row(s); migrate() = .T.; the row that was on the server before: 0                   (the table now has 2                   rows); an empty DBF date arrived as: 1753-01-01                    ; cLastError: ERROR - Error en la Consulta SQL:  Código de Error: 1526  Mensaje de Error: Connectivity error: [ODBC Firebird Driver][Firebird]Dynamic SQL Error-SQL error code = -206-Column unknown-RDB$DATABASE_NAME-At line 1, column 4
+F4b|BUG|migrate(folder) = .T.; default folder before: C:\USERS\RODRI\APPDATA\LOCAL\TEMP\CLAUDE\C--DESARROLLO-IRWINRODRIGUEZ-DEV-FOXSTACK\B10A4033-5445-471F-A24E-0ED071FE4ABC\SCRATCHPAD\PROBE, after: C:\USERS\RODRI\APPDATA\LOCAL\TEMP\CLAUDE\C--DESARROLLO-IRWINRODRIGUEZ-DEV-FOXSTACK\B10A4033-5445-471F-A24E-0ED071FE4ABC\SCRATCHPAD\PROBE\MIGDIR__7KR0XNNEO

@@ -1,0 +1,10 @@
+{
+  "name": "foxremote",
+  "version": "1.0.0",
+  "description": "One API for SQL Server, MySQL, MariaDB, PostgreSQL, Firebird and SQLite from VFP 9 through ODBC: named parameters, transactions, buffered cursors that save their changes, and DBF migration.",
+  "license": "MIT",
+  "files": [
+    "foxremote.prg"
+  ],
+  "usage": "SET PROCEDURE TO foxremote.prg ADDITIVE"
+}

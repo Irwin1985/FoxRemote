@@ -1,0 +1,43 @@
+{'total': 41, 'passed': 0, 'failed': 40, 'errors': 1, 'skipped': 0, 'duration_ms': 87017, 'success': False}
+TestConnectDoesNotCreateAMissingDatabase                failed     906ms  firebird,mariadb,mssql,postgresql,sqlite
+TestCreateDatabaseThenConnect                           failed     844ms  firebird,postgresql,sqlite
+TestConnectLandsInTheRequestedDatabase                  failed     594ms  postgresql
+TestConnectWithASemicolonInThePassword                  failed     110ms  firebird,mariadb,mssql,postgresql,sqlite
+TestConnectWithWindowsAuthentication                    failed      32ms  mssql
+TestConnectDoesNotChangeGlobalSettings                  failed     203ms  firebird,mariadb,mssql,postgresql,sqlite
+TestConnectFailureIsReportedWithoutADialog              error    60000ms  Infrastructure error: Test timed out after 60000ms — VFP process was killed. It was waitin
+TestErrorsAreCountedWithCodeAndStatement                failed     203ms  firebird,mariadb,mssql,postgresql,sqlite
+TestStrictModeThrows                                    failed     156ms  firebird,mariadb,mssql,postgresql,sqlite
+TestQueryWithNamedParametersFromLocals                  failed    1000ms  firebird,mariadb,mssql,postgresql,sqlite
+TestScalarReturnsNumbers                                failed     797ms  firebird,mariadb,postgresql
+TestExecuteReturnsAffectedRows                          failed     984ms  firebird,mariadb,mssql,postgresql,sqlite
+TestTransactionCommitPersists                           failed     672ms  postgresql
+TestTransactionRollbackUndoes                           failed     766ms  postgresql,sqlite
+TestDisconnectWithAnOpenTransactionRollsBack            failed     562ms  firebird,mariadb,mssql,postgresql,sqlite
+TestSaveInsertIsCommittedAndReturnsTheId                failed     984ms  firebird,mariadb,mssql,postgresql,sqlite
+TestSaveUpdatesOnlyTheChangedColumns                    failed    1094ms  firebird,mariadb,mssql,postgresql,sqlite
+TestSaveDeletesTheRow                                   failed    1171ms  firebird,mariadb,mssql,postgresql,sqlite
+TestSaveFailureReturnsFalseAndKeepsTheEdits             failed     781ms  firebird,mariadb,mssql,postgresql,sqlite
+TestSaveOfAnUnknownAliasLeavesNoTransactionOpen         failed     672ms  firebird,mariadb,mssql,postgresql,sqlite
+TestSaveOfAReadOnlyCursorKeepsTheSettings               failed     656ms  firebird,mariadb,mssql,postgresql,sqlite
+TestSaveGroupSendsEveryCursor                           failed    1594ms  firebird,mariadb,mssql,postgresql,sqlite
+TestOpenForWritingWithoutAPrimaryKeyIsRefused           failed     625ms  firebird,mariadb,mssql,postgresql,sqlite
+TestCloseGroupThenReopenTheSameAlias                    failed     516ms  firebird,mariadb,mssql,postgresql,sqlite
+TestRefreshReloadsAReadOnlyCursor                       failed     906ms  firebird,mariadb,mssql,postgresql,sqlite
+TestRefreshRefusesWithPendingChanges                    failed     813ms  mariadb,mssql,postgresql,sqlite
+TestCloseAllLeavesTheUsersCursorsOpen                   failed     610ms  postgresql
+TestAccentedTextRoundTrip                               failed     969ms  firebird,mariadb,mssql,postgresql,sqlite
+TestSaveDoesNotPadVarchar                               failed     781ms  firebird,mariadb,mssql,postgresql,sqlite
+TestLongTextRoundTrip                                   failed     812ms  firebird,mssql,postgresql,sqlite
+TestEmptyDateIsStoredAsNull                             failed     922ms  firebird,mariadb,mssql,postgresql,sqlite
+TestServerTextIsNotUcs2                                 failed     141ms  firebird,mssql,postgresql,sqlite
+TestGetPrimaryKey                                       failed     609ms  firebird,mariadb,mssql,postgresql,sqlite
+TestGetTablesReturnsACursor                             failed     860ms  firebird,mariadb,mssql,postgresql,sqlite
+TestGetColumnsReturnsACursor                            failed     469ms  firebird,mariadb,mssql,postgresql,sqlite
+TestLastIdAfterExecute                                  failed     828ms  firebird,mariadb,mssql,postgresql,sqlite
+TestMigrateRefusesAnExistingTable                       failed     891ms  firebird,mariadb,mssql,postgresql,sqlite
+TestMigrateReplaceCopiesRowsWithUsableNames             failed     797ms  firebird,mariadb,mssql,postgresql,sqlite
+TestMigrateOfAFolderKeepsTheDefaultDirectory            failed     312ms  firebird,mariadb,mssql,postgresql,sqlite
+TestCreateTableFromCursorKeepsCharacterColumns          failed     375ms  firebird,postgresql,sqlite
+TestLibraryHasNoUserInterface                           failed       0ms  user interface in foxremote.prg: 148: 					MessageBox(this.cLastError, 16) 303: 					Messa
+

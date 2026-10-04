@@ -1,0 +1,21 @@
+ENGINE|INFO|SQLite 3.43.2
+S1|BUG|getVersion() = '3<NUL>.<NUL>4<NUL>3<NUL>.<NUL>2<NUL>' (12 chars, 6 CHR(0))
+N1|BUG|getPrimaryKey('customers') = '' (expected id); script: SELECT name AS COLUMN_NAME FROM pragma_table_info('"customers"') WHERE pk = 1
+A1|BUG|Save() = .T.; sent hex 5065F16120C16C7661726F208035; another connection reads hex 5065F161206C7661726F2035; FoxRemote's use() reads hex 5065F16120C16C7661726F208035
+F3|BUG|Connect() to a missing database returned .T. and the database now exists: C:\USERS\RODRI\APPDATA\LOCAL\TEMP\CLAUDE\C--DESARROLLO-IRWINRODRIGUEZ-DEV-FOXSTACK\B10A4033-5445-471F-A24E-0ED071FE4ABC\SCRATCHPAD\PROBE\missing__7KQ1CGJFG.db
+F11|BUG|SET MULTILOCKS before Connect: OFF, after: ON
+F1a|BUG|Save('not_opened') = .F.; Transactions 1 -> 2; an INSERT run afterwards and then disconnect: rows on the server = 0
+F1b|BUG|Save(read-only) = .F.; SET DATE AMERICAN -> YMD; Transactions 1 -> 2
+F1c|OK|Save() = .T.; another connection sees the row before disconnect: 1; Transactions after Save() = 1; after a SQLCOMMIT() by hand: 1, after disconnect: 1
+F12|BUG|bUseCA=.F., name and city changed, Save() = .T.; on the server: f12_old/Oslo (expected f12_new/Lima), read after a SQLCOMMIT() by hand
+F2|BUG|saveGroup() = .T.; city on the server: Bonn (expected Kiel)
+F5|INFO|getTables(): raised 1806 SQL: Column 'TABLE_NAME' is not found. || getTableFields('customers') (4 columns): raised 1806 SQL: Column 'COLUMN_NAME' is not found.
+F6|BUG|getLastID() raised 1734 Property GETLASTIDSCRIPT is not found.; the id inserted is 6
+F6b|BUG|getLastID() raised 1734 Property GETLASTIDSCRIPT is not found.; the id inserted is 7
+F7|BUG|closeGroup() = .T., alias open after: .F.; use() again = .F. raised 2062 The specified Key already exists.
+F8a|BUG|read-only cursor, a row inserted by another connection, requery(): rows 7 -> 7
+F8b|BUG|pending change city=Linz, another connection makes a 2nd row match, requery(): Linz kept, rows in the cursor 1 (a real requery that keeps the change gives 2 and Linz kept)
+F9|OK|use(nopk) = .T., Save() = .T., rows on the server after a SQLCOMMIT() by hand: 1; cLastError: 
+F10|BUG|database path with ';' 'C:\USERS\RODRI\APPDATA\LOCAL\TEMP\CLAUDE\C--DESARROLLO-IRWINRODRIGUEZ-DEV-FOXSTACK\B10A4033-5445-471F-A24E-0ED071FE4ABC\SCRATCHPAD\PROBE\semi;colon__7KQ1CGJIA\fr.db': Connect() = .T.; the file asked for does not exist; the driver created C:\USERS\RODRI\APPDATA\LOCAL\TEMP\CLAUDE\C--DESARROLLO-IRWINRODRIGUEZ-DEV-FOXSTACK\B10A4033-5445-471F-A24E-0ED071FE4ABC\SCRATCHPAD\PROBE\semi instead (the path was cut at the ';'); sanity, the same with a wrong value: Connect() = .T.; cLastError: 
+F4a|BUG|before migrate() the server table had 1 row(s); migrate() = .T.; the row that was on the server before: <Connectivity error: no such table: mig_cust (1)> (the table now has <Connectivity error: no such table: mig_cust (1)> rows); an empty DBF date arrived as: <Connectivity error: no such table: mig_cust (1)>; cLastError: ERROR - Error en la Consulta SQL:  Código de Error: 1526  Mensaje de Error: Connectivity error: no such table: mig_cust (1)no such table: mig_cust (1)  Por favor, revisa la consulta SQL y asegúrate de que está correctame
+F4b|BUG|migrate(folder) = .T.; default folder before: C:\USERS\RODRI\APPDATA\LOCAL\TEMP\CLAUDE\C--DESARROLLO-IRWINRODRIGUEZ-DEV-FOXSTACK\B10A4033-5445-471F-A24E-0ED071FE4ABC\SCRATCHPAD\PROBE, after: C:\USERS\RODRI\APPDATA\LOCAL\TEMP\CLAUDE\C--DESARROLLO-IRWINRODRIGUEZ-DEV-FOXSTACK\B10A4033-5445-471F-A24E-0ED071FE4ABC\SCRATCHPAD\PROBE\MIGDIR__7KQ1CGJJB

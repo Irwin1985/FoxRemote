@@ -1,0 +1,24 @@
+ENGINE|INFO|PostgreSQL PostgreSQL 18.6 on x86_64-windows, compi / client_encoding WIN1252
+P0a|BUG|getConnectionString(.T.) = DRIVER={PostgreSQL ANSI}; SERVER=127.0.0.1; PORT=5432.00; UID=postgres; PWD=<pwd>; APP=Postgresql by FoxRemoteDATABASE=fr_probe_7kr0xlbj4
+P0b|BUG|plain class as postgres, cDatabase = fr_probe_7kr0xlbj4: Connect() = .F., current_database() = .NULL.; cLastError: ERROR - Error en la Consulta SQL:  Código de Error: 1526  Mensaje de Error: Connectivity error: invalid integer value "5432.00" for connection option "port"invalid integer value "5432.00" for connection option "port"    
+P0c|INFO|plain class as fr_probe (no database of that name), wrong password: Connect() = .F.; cLastError: ERROR - Error en la Consulta SQL:  Código de Error: 1526  Mensaje de Error: Connectivity error: invalid integer value "5432.00" for connection option "port"invalid integer value "5432.00" for connection option "port"    
+S1|OK|getVersion() = 'PostgreSQL 18.6 on x86_64-windows, compiled by msvc-19.44.35229, 64-bit' (71 chars, 0 CHR(0))
+N1|ERROR|probe raised 13 Alias '_7KR0XLCS7' is not found. (getprimarykey line 1277: lcField = Alltrim(Strtran(&lcCursor..column_name, Chr(0))))
+A1|ERROR|probe raised 13 Alias '_7KR0XLCUO' is not found. (getprimarykey line 1277: lcField = Alltrim(Strtran(&lcCursor..column_name, Chr(0))))
+F3|BUG|Connect() to a missing database returned .T. and the database now exists: fr_missing_7kr0xlcuq
+F11|BUG|SET MULTILOCKS before Connect: OFF, after: ON
+F1a|BUG|Save('not_opened') = .F.; Transactions 1 -> 2; an INSERT run afterwards and then disconnect: rows on the server = 0                   
+F1b|ERROR|probe raised 13 Alias '_7KR0XLDX6' is not found. (getprimarykey line 1277: lcField = Alltrim(Strtran(&lcCursor..column_name, Chr(0))))
+F1c|ERROR|probe raised 13 Alias '_7KR0XLDZI' is not found. (getprimarykey line 1277: lcField = Alltrim(Strtran(&lcCursor..column_name, Chr(0))))
+F12|ERROR|probe raised 13 Alias '_7KR0XLE3A' is not found. (getprimarykey line 1277: lcField = Alltrim(Strtran(&lcCursor..column_name, Chr(0))))
+F2|ERROR|probe raised 13 Alias '_7KR0XLE9R' is not found. (getprimarykey line 1277: lcField = Alltrim(Strtran(&lcCursor..column_name, Chr(0))))
+F5|INFO|getTables(): TYPE=C value=customers                                                       ALEN(aCustomArray)=2 || getTableFields('customers') (4 columns): TYPE=L value=.F. ALEN(aCustomArray)=1
+F6|BUG|getLastID() raised 1734 Property GETLASTIDSCRIPT is not found.; the id inserted is 5
+F6b|BUG|getLastID() raised 1734 Property GETLASTIDSCRIPT is not found.; the id inserted is 6
+F7|ERROR|probe raised 13 Alias '_7KR0XLELB' is not found. (getprimarykey line 1277: lcField = Alltrim(Strtran(&lcCursor..column_name, Chr(0))))
+F8a|ERROR|probe raised 13 Alias '_7KR0XLEO3' is not found. (getprimarykey line 1277: lcField = Alltrim(Strtran(&lcCursor..column_name, Chr(0))))
+F8b|ERROR|probe raised 13 Alias '_7KR0XLERR' is not found. (getprimarykey line 1277: lcField = Alltrim(Strtran(&lcCursor..column_name, Chr(0))))
+F9|ERROR|probe raised 13 Alias '_7KR0XLEU4' is not found. (getprimarykey line 1277: lcField = Alltrim(Strtran(&lcCursor..column_name, Chr(0))))
+F10|BUG|user with ';' in the password '<hidden, 18 chars, has ';'=.T.>': Connect() = .F.; the value arrived whole; sanity, the same with a wrong value: Connect() = .F.; cLastError: ERROR - Error en la Consulta SQL:  Código de Error: 1526  Mensaje de Error: Connectivity error: invalid integer value "5432.00" for connection option "port"invalid integer value "5432.00" for connection option "port"    
+F4a|BUG|before migrate() the server table had 1                    row(s); migrate() = .T.; the row that was on the server before: <Connectivity error: ERROR: no existe la columna «name»; Error while executing the query> (the table now has 2                    rows); an empty DBF date arrived as: <Connectivity error: ERROR: no existe la columna «born»; Error while executing the query>; cLastError: 
+F4b|BUG|migrate(folder) = .T.; default folder before: C:\USERS\RODRI\APPDATA\LOCAL\TEMP\CLAUDE\C--DESARROLLO-IRWINRODRIGUEZ-DEV-FOXSTACK\B10A4033-5445-471F-A24E-0ED071FE4ABC\SCRATCHPAD\PROBE, after: C:\USERS\RODRI\APPDATA\LOCAL\TEMP\CLAUDE\C--DESARROLLO-IRWINRODRIGUEZ-DEV-FOXSTACK\B10A4033-5445-471F-A24E-0ED071FE4ABC\SCRATCHPAD\PROBE\MIGDIR__7KR0XLF6N

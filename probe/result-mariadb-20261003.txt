@@ -1,0 +1,21 @@
+ENGINE|INFO|MariaDB 11.8.9-MariaDB / charset latin1
+S1|OK|getVersion() = '11.8.9-MariaDB' (14 chars, 0 CHR(0))
+N1|BUG|getPrimaryKey('customers') = '' (expected id); script: SELECT COLUMN_NAME  FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE  WHERE TABLE_SCHEMA = '`fr_probe_7kq1cg5sg`'  AND TABLE_NAME = '`customers`'  AND CONSTRAINT_NAME = 'PRIMARY';
+A1|OK|Save() = .T.; sent hex 5065F16120C16C7661726F208035; another connection reads hex 5065F16120C16C7661726F208035 (+ 26 trailing blanks); FoxRemote's use() reads hex 5065F16120C16C7661726F208035
+F3|BUG|Connect() to a missing database returned .T. and the database now exists: fr_missing_7kq1cg5ut
+F11|BUG|SET MULTILOCKS before Connect: OFF, after: ON
+F1a|BUG|Save('not_opened') = .F.; Transactions 1 -> 2; an INSERT run afterwards and then disconnect: rows on the server = 0                   
+F1b|BUG|Save(read-only) = .F.; SET DATE AMERICAN -> YMD; Transactions 1 -> 2
+F1c|OK|Save() = .T.; another connection sees the row before disconnect: 1                   ; Transactions after Save() = 1; after a SQLCOMMIT() by hand: 1                   , after disconnect: 1                   
+F12|BUG|bUseCA=.F., name and city changed, Save() = .T.; on the server: f12_old/Oslo                                                                      (expected f12_new/Lima), read after a SQLCOMMIT() by hand
+F2|BUG|saveGroup() = .T.; city on the server: Bonn                                     (expected Kiel)
+F5|INFO|getTables(): TYPE=C value=customers                                                        ALEN(aCustomArray)=2 || getTableFields('customers') (4 columns): TYPE=L value=.F. ALEN(aCustomArray)=1
+F6|BUG|getLastID() = 7                    (type C); the id inserted is 7
+F6b|BUG|getLastID() after INSERT ... VALUES (?param) = 8                    (type C); the id inserted is 8
+F7|BUG|closeGroup() = .T., alias open after: .F.; use() again = .F. raised 2062 The specified Key already exists.
+F8a|BUG|read-only cursor, a row inserted by another connection, requery(): rows 7 -> 7
+F8b|BUG|pending change city=Linz, another connection makes a 2nd row match, requery(): Linz kept, rows in the cursor 1 (a real requery that keeps the change gives 2 and Linz kept)
+F9|OK|use(nopk) = .T., Save() = .T., rows on the server after a SQLCOMMIT() by hand: 1                   ; cLastError: 
+F10|BUG|user with ';' in the password '<hidden, 18 chars, has ';'=.T.>': Connect() = .F.; the value arrived whole; sanity, the same with a wrong value: Connect() = .F.; cLastError: ERROR - Error en la Consulta SQL:  Código de Error: 1526  Mensaje de Error: Connectivity error: [ma-3.2.9]Access denied for user 'fr_probe'@'localhost' (using password: YES)[ma-3.2.9]Access denied for user 'fr_probe'@'lo
+F4a|BUG|before migrate() the server table had 1                    row(s); migrate() = .T.; the row that was on the server before: 0                    (the table now has 2                    rows); an empty DBF date arrived as: 1000-01-01; cLastError: 
+F4b|BUG|migrate(folder) = .T.; default folder before: C:\USERS\RODRI\APPDATA\LOCAL\TEMP\CLAUDE\C--DESARROLLO-IRWINRODRIGUEZ-DEV-FOXSTACK\B10A4033-5445-471F-A24E-0ED071FE4ABC\SCRATCHPAD\PROBE, after: C:\USERS\RODRI\APPDATA\LOCAL\TEMP\CLAUDE\C--DESARROLLO-IRWINRODRIGUEZ-DEV-FOXSTACK\B10A4033-5445-471F-A24E-0ED071FE4ABC\SCRATCHPAD\PROBE\MIGDIR__7KQ1CG610

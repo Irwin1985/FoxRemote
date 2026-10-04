@@ -1,0 +1,561 @@
+{'total': 41, 'passed': 0, 'failed': 40, 'errors': 1, 'skipped': 0, 'duration_ms': 87017, 'success': False}
+=== TestConnectDoesNotCreateAMissingDatabase  failed  906ms
+    [sqlite] Connect() to a missing database returned .T.
+    [sqlite] cLastErrorCode = '', expected database_not_found
+    [sqlite] the missing database was created
+    [mssql] Connect() to a missing database returned .T.
+    [mssql] cLastErrorCode = '', expected database_not_found
+    [mssql] the missing database was created
+    [mariadb] Connect() to a missing database returned .T.
+    [mariadb] cLastErrorCode = '', expected database_not_found
+    [mariadb] the missing database was created
+    [postgresql] cLastErrorCode = '', expected database_not_found
+    [firebird] cLastErrorCode = '', expected database_not_found
+=== TestCreateDatabaseThenConnect  failed  844ms
+    [sqlite] the database does not exist after CreateDatabase()
+    [postgresql] CreateDatabase() failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: invalid integer value "5432.00" for connection option "port"invalid integer value "5432.00" for connection option "port"  
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [postgresql] the database does not exist after CreateDatabase()
+    [postgresql] Connect() to the new database failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: invalid integer value "5432.00" for connection option "port"invalid integer value "5432.00" for connection option "port"  
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [firebird] the database does not exist after CreateDatabase()
+    [firebird] Connect() to the new database failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: [ODBC Firebird Driver]File Database is not found[ODBC Firebird Driver]File Database is not found
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+=== TestConnectLandsInTheRequestedDatabase  failed  594ms
+    [postgresql] Connect() to the test database failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: invalid integer value "5432.00" for connection option "port"invalid integer value "5432.00" for connection option "port"  
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [postgresql] raised 1466 Connection handle is invalid. (sqlexec, line 892)
+=== TestConnectWithASemicolonInThePassword  failed  110ms
+    [sqlite] a database path with ';' did not reach the file: 
+    [mssql] Connect() as sa (password with ';') failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Login failed for user 'sa'.[Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Login failed for user 'sa'.
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [mariadb] Connect() as fr_probe (password with ';') failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: [ma-3.2.9]Access denied for user 'fr_probe'@'localhost' (using password: YES)[ma-3.2.9]Access denied for user 'fr_probe'@'localhost' (using password: YES)
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [postgresql] Connect() as fr_probe (password with ';') failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: invalid integer value "5432.00" for connection option "port"invalid integer value "5432.00" for connection option "port"  
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [firebird] Connect() as FR_PROBE (password with ';') failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: [ODBC Firebird Driver]Your user name and password are not defined. Ask your database administrator to set up a Firebird login.[ODBC Firebird Driver]Your user name and password are not defined. Ask your database administrator to set up a Firebird login.
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+=== TestConnectWithWindowsAuthentication  failed  32ms
+    [mssql] Connect() with lTrustedConnection failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Login failed for user ''.[Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Login failed for user ''.
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [mssql] raised 1466 Connection handle is invalid. (sqlexec, line 892)
+=== TestConnectDoesNotChangeGlobalSettings  failed  203ms
+    [sqlite] SET MULTILOCKS changed by Connect()
+    [mssql] SET MULTILOCKS changed by Connect()
+    [mariadb] SET MULTILOCKS changed by Connect()
+    [postgresql] Connect() to the test database failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: invalid integer value "5432.00" for connection option "port"invalid integer value "5432.00" for connection option "port"  
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [firebird] SET MULTILOCKS changed by Connect()
+=== TestConnectFailureIsReportedWithoutADialog  error  60000ms
+    Infrastructure error: Test timed out after 60000ms — VFP process was killed. It was waiting on this dialog: Microsoft SQL Server Login: Connection failed:  SQLState: '28000'  SQL Server Error: 18456  [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Login failed for user 'fr_test'.
+=== TestErrorsAreCountedWithCodeAndStatement  failed  203ms
+    [sqlite] nErrors = 0, expected 1
+    [sqlite] cLastErrorCode = '', expected query_failed
+    [sqlite] cLastSql = ''
+    [sqlite] cLastError should be one non-empty line: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: no such table: no_such_table_fr (1)no such table: no_such_table_fr (1)
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [mssql] nErrors = 0, expected 1
+    [mssql] cLastErrorCode = '', expected query_failed
+    [mssql] cLastSql = ''
+    [mssql] cLastError should be one non-empty line: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Invalid object name 'no_such_table_fr'.[Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Invalid object name 'no_such_table_fr'.
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [mariadb] nErrors = 0, expected 1
+    [mariadb] cLastErrorCode = '', expected query_failed
+    [mariadb] cLastSql = ''
+    [mariadb] cLastError should be one non-empty line: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: [ma-3.2.9][11.8.9-MariaDB]Table 'foxremote_test.no_such_table_fr' doesn't exist[ma-3.2.9][11.8.9-MariaDB]Table 'foxremote_test.no_such_table_fr' doesn't exist
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [postgresql] Connect() to the test database failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: invalid integer value "5432.00" for connection option "port"invalid integer value "5432.00" for connection option "port"  
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [postgresql] raised 1466 Connection handle is invalid. (sqlexec, line 892)
+    [firebird] nErrors = 0, expected 1
+    [firebird] cLastErrorCode = '', expected query_failed
+    [firebird] cLastSql = ''
+    [firebird] cLastError should be one non-empty line: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: [ODBC Firebird Driver][Firebird]Dynamic SQL Error-SQL error code = -204-Table unknown-NO_SUCH_TABLE_FR-At line 1, column 15[ODBC Firebird Driver][Firebird]Dynamic SQL Error-SQL error code = -204-Table unknown-NO_SUCH_TABLE_FR-At line 1, column 15        
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+=== TestStrictModeThrows  failed  156ms
+    [sqlite] with lStrict, a bad statement did not throw
+    [mssql] with lStrict, a bad statement did not throw
+    [mariadb] with lStrict, a bad statement did not throw
+    [postgresql] Connect() to the test database failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: invalid integer value "5432.00" for connection option "port"invalid integer value "5432.00" for connection option "port"  
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [firebird] with lStrict, a bad statement did not throw
+=== TestQueryWithNamedParametersFromLocals  failed  1000ms
+    [sqlite] Query() with :city failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: parameter marker count incorrectparameter marker count incorrect
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [mssql] Query() with :city failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Incorrect syntax near ':'.[Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Incorrect syntax near ':'.
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [mariadb] Query() with :city failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: [ma-3.2.9][11.8.9-MariaDB]You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near ':city' at line 1[ma-3.2.9][11.8.9-MariaDB]You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near ':city' at line 1
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [postgresql] Connect() to the test database failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: invalid integer value "5432.00" for connection option "port"invalid integer value "5432.00" for connection option "port"  
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [postgresql] raised 1466 Connection handle is invalid. (sqlexec, line 892)
+    [firebird] Query() with :city failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: [ODBC Firebird Driver][Firebird]Dynamic SQL Error-SQL error code = -206-Column unknown-CITY-At line 1, column 43[ODBC Firebird Driver][Firebird]Dynamic SQL Error-SQL error code = -206-Column unknown-CITY-At line 1, column 43        
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+=== TestScalarReturnsNumbers  failed  797ms
+    [mariadb] Scalar(COUNT(*)) = 1                    (type C), expected the number 1
+    [postgresql] Connect() to the test database failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: invalid integer value "5432.00" for connection option "port"invalid integer value "5432.00" for connection option "port"  
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [postgresql] raised 1466 Connection handle is invalid. (sqlexec, line 892)
+    [firebird] Scalar(COUNT(*)) = 1                   (type C), expected the number 1
+=== TestExecuteReturnsAffectedRows  failed  984ms
+    [sqlite] Execute(UPDATE of 2 rows) returned 0
+    [mssql] Execute(UPDATE of 2 rows) returned 0
+    [mariadb] Execute(UPDATE of 2 rows) returned 0
+    [postgresql] Connect() to the test database failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: invalid integer value "5432.00" for connection option "port"invalid integer value "5432.00" for connection option "port"  
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [postgresql] raised 1466 Connection handle is invalid. (sqlexec, line 892)
+    [firebird] Execute(UPDATE of 2 rows) returned 0
+=== TestTransactionCommitPersists  failed  672ms
+    [postgresql] Connect() to the test database failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: invalid integer value "5432.00" for connection option "port"invalid integer value "5432.00" for connection option "port"  
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [postgresql] raised 1466 Connection handle is invalid. (sqlexec, line 892)
+=== TestTransactionRollbackUndoes  failed  766ms
+    [sqlite] the rolled back row is on the server
+    [postgresql] Connect() to the test database failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: invalid integer value "5432.00" for connection option "port"invalid integer value "5432.00" for connection option "port"  
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [postgresql] raised 1466 Connection handle is invalid. (sqlexec, line 892)
+=== TestDisconnectWithAnOpenTransactionRollsBack  failed  562ms
+    [sqlite] cLastErrorCode = '', expected rolled_back_on_disconnect
+    [sqlite] the row of the open transaction is on the server
+    [mssql] cLastErrorCode = '', expected rolled_back_on_disconnect
+    [mariadb] cLastErrorCode = '', expected rolled_back_on_disconnect
+    [postgresql] Connect() to the test database failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: invalid integer value "5432.00" for connection option "port"invalid integer value "5432.00" for connection option "port"  
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [postgresql] raised 1466 Connection handle is invalid. (sqlexec, line 892)
+    [firebird] cLastErrorCode = '', expected rolled_back_on_disconnect
+=== TestSaveInsertIsCommittedAndReturnsTheId  failed  984ms
+    [sqlite] another connection does not see the inserted row before Disconnect()
+    [sqlite] the cursor's id is 0, the server gave 2
+    [mssql] the cursor's id is 0, the server gave 2
+    [mariadb] the cursor's id is 0, the server gave 2
+    [postgresql] Connect() to the test database failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: invalid integer value "5432.00" for connection option "port"invalid integer value "5432.00" for connection option "port"  
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [postgresql] raised 1466 Connection handle is invalid. (sqlexec, line 892)
+    [firebird] Open() failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: [ODBC Firebird Driver][Firebird]Dynamic SQL Error-SQL error code = -204-Table unknown-fr7kr0yrjes-At line 1, column 15[ODBC Firebird Driver][Firebird]Dynamic SQL Error-SQL error code = -204-Table unknown-fr7kr0yrjes-At line 1, column 15        
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+=== TestSaveUpdatesOnlyTheChangedColumns  failed  1094ms
+    [sqlite] Save() of an update failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1492
+    Mensaje de Error: No key columns are specified for the update table "fr7kr0yrjhv". Use the KeyFieldList property of the cursor.fr7kr0yrjhv
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [sqlite] on the server: old/Oslo, expected new/Lima
+    [mssql] Save() of an update failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1492
+    Mensaje de Error: No key columns are specified for the update table "fr7kr0yrjir". Use the KeyFieldList property of the cursor.fr7kr0yrjir
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [mssql] on the server: old/Oslo                                                                         , expected new/Lima
+    [mariadb] Save() of an update failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1492
+    Mensaje de Error: No key columns are specified for the update table "fr7kr0yrk4p". Use the KeyFieldList property of the cursor.fr7kr0yrk4p
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [mariadb] on the server: old/Oslo                                                                         , expected new/Lima
+    [postgresql] Connect() to the test database failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: invalid integer value "5432.00" for connection option "port"invalid integer value "5432.00" for connection option "port"  
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [postgresql] raised 1466 Connection handle is invalid. (sqlexec, line 892)
+    [firebird] Open() failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: [ODBC Firebird Driver][Firebird]Dynamic SQL Error-SQL error code = -204-Table unknown-fr7kr0yrk8x-At line 1, column 15[ODBC Firebird Driver][Firebird]Dynamic SQL Error-SQL error code = -204-Table unknown-fr7kr0yrk8x-At line 1, column 15        
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+=== TestSaveDeletesTheRow  failed  1171ms
+    [sqlite] Save() of a delete failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1492
+    Mensaje de Error: No key columns are specified for the update table "fr7kr0yrkcg". Use the KeyFieldList property of the cursor.fr7kr0yrkcg
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [sqlite] the server has 2 rows, expected only 'stays'
+    [mssql] Save() of a delete failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1492
+    Mensaje de Error: No key columns are specified for the update table "fr7kr0yrkdd". Use the KeyFieldList property of the cursor.fr7kr0yrkdd
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [mssql] the server has 2 rows, expected only 'stays'
+    [mariadb] Save() of a delete failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1492
+    Mensaje de Error: No key columns are specified for the update table "fr7kr0yrl04". Use the KeyFieldList property of the cursor.fr7kr0yrl04
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [mariadb] the server has 2 rows, expected only 'stays'
+    [postgresql] Connect() to the test database failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: invalid integer value "5432.00" for connection option "port"invalid integer value "5432.00" for connection option "port"  
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [postgresql] raised 1466 Connection handle is invalid. (sqlexec, line 892)
+    [firebird] Open() failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: [ODBC Firebird Driver][Firebird]Dynamic SQL Error-SQL error code = -204-Table unknown-fr7kr0yrl5g-At line 1, column 15[ODBC Firebird Driver][Firebird]Dynamic SQL Error-SQL error code = -204-Table unknown-fr7kr0yrl5g-At line 1, column 15        
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+=== TestSaveFailureReturnsFalseAndKeepsTheEdits  failed  781ms
+    [sqlite] cLastErrorCode = '', expected save_failed
+    [sqlite] the server kept 1 rows of a failed Save()
+    [mssql] cLastErrorCode = '', expected save_failed
+    [mariadb] cLastErrorCode = '', expected save_failed
+    [postgresql] Connect() to the test database failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: invalid integer value "5432.00" for connection option "port"invalid integer value "5432.00" for connection option "port"  
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [postgresql] raised 1466 Connection handle is invalid. (sqlexec, line 892)
+    [firebird] Open() failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: [ODBC Firebird Driver][Firebird]Dynamic SQL Error-SQL error code = -204-Table unknown-fr7kr0yrlth-At line 1, column 15[ODBC Firebird Driver][Firebird]Dynamic SQL Error-SQL error code = -204-Table unknown-fr7kr0yrlth-At line 1, column 15        
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+=== TestSaveOfAnUnknownAliasLeavesNoTransactionOpen  failed  672ms
+    [sqlite] cLastErrorCode = '', expected not_open
+    [sqlite] an INSERT run after that Save() was lost at Disconnect()
+    [mssql] cLastErrorCode = '', expected not_open
+    [mssql] an INSERT run after that Save() was lost at Disconnect()
+    [mariadb] cLastErrorCode = '', expected not_open
+    [mariadb] an INSERT run after that Save() was lost at Disconnect()
+    [postgresql] Connect() to the test database failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: invalid integer value "5432.00" for connection option "port"invalid integer value "5432.00" for connection option "port"  
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [postgresql] raised 1466 Connection handle is invalid. (save, line 640)
+    [firebird] cLastErrorCode = '', expected not_open
+    [firebird] an INSERT run after that Save() was lost at Disconnect()
+=== TestSaveOfAReadOnlyCursorKeepsTheSettings  failed  656ms
+    [sqlite] cLastErrorCode = '', expected read_only
+    [sqlite] SET DATE is YMD after Save()
+    [sqlite] the handle stayed in manual transactions
+    [mssql] cLastErrorCode = '', expected read_only
+    [mssql] SET DATE is DMY after Save()
+    [mssql] the handle stayed in manual transactions
+    [mariadb] cLastErrorCode = '', expected read_only
+    [mariadb] SET DATE is YMD after Save()
+    [mariadb] the handle stayed in manual transactions
+    [postgresql] Connect() to the test database failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: invalid integer value "5432.00" for connection option "port"invalid integer value "5432.00" for connection option "port"  
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [postgresql] raised 1466 Connection handle is invalid. (sqlexec, line 892)
+    [firebird] Open() read-only failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: [ODBC Firebird Driver][Firebird]Dynamic SQL Error-SQL error code = -204-Table unknown-fr7kr0yrmug-At line 1, column 15[ODBC Firebird Driver][Firebird]Dynamic SQL Error-SQL error code = -204-Table unknown-fr7kr0yrmug-At line 1, column 15        
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [firebird] cLastErrorCode = '', expected read_only
+    [firebird] the handle stayed in manual transactions
+=== TestSaveGroupSendsEveryCursor  failed  1594ms
+    [sqlite] SaveGroup() failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1492
+    Mensaje de Error: No key columns are specified for the update table "fr7kr0yrmx7". Use the KeyFieldList property of the cursor.fr7kr0yrmx7
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [sqlite] SaveGroup() did not reach the server
+    [mssql] SaveGroup() failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1492
+    Mensaje de Error: No key columns are specified for the update table "fr7kr0yrmym". Use the KeyFieldList property of the cursor.fr7kr0yrmym
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [mssql] SaveGroup() did not reach the server
+    [mariadb] SaveGroup() failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1492
+    Mensaje de Error: No key columns are specified for the update table "fr7kr0yrntu". Use the KeyFieldList property of the cursor.fr7kr0yrntu
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [mariadb] SaveGroup() did not reach the server
+    [postgresql] Connect() to the test database failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: invalid integer value "5432.00" for connection option "port"invalid integer value "5432.00" for connection option "port"  
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [postgresql] raised 1466 Connection handle is invalid. (sqlexec, line 892)
+    [firebird] Open() 1 failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: [ODBC Firebird Driver][Firebird]Dynamic SQL Error-SQL error code = -204-Table unknown-fr7kr0yrnzz-At line 1, column 15[ODBC Firebird Driver][Firebird]Dynamic SQL Error-SQL error code = -204-Table unknown-fr7kr0yrnzz-At line 1, column 15        
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [firebird] Open() 2 failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: [ODBC Firebird Driver][Firebird]Dynamic SQL Error-SQL error code = -204-Table unknown-fr7kr0yro00-At line 1, column 15[ODBC Firebird Driver][Firebird]Dynamic SQL Error-SQL error code = -204-Table unknown-fr7kr0yro00-At line 1, column 15        
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+=== TestOpenForWritingWithoutAPrimaryKeyIsRefused  failed  625ms
+    [sqlite] Open() for writing a table without a primary key returned .T.
+    [sqlite] cLastErrorCode = '', expected no_primary_key
+    [mssql] Open() for writing a table without a primary key returned .T.
+    [mssql] cLastErrorCode = '', expected no_primary_key
+    [mariadb] Open() for writing a table without a primary key returned .T.
+    [mariadb] cLastErrorCode = '', expected no_primary_key
+    [postgresql] Connect() to the test database failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: invalid integer value "5432.00" for connection option "port"invalid integer value "5432.00" for connection option "port"  
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [postgresql] raised 1466 Connection handle is invalid. (sqlexec, line 892)
+    [firebird] cLastErrorCode = '', expected no_primary_key
+    [firebird] Open() read-only of a table without a primary key failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: [ODBC Firebird Driver][Firebird]Dynamic SQL Error-SQL error code = -204-Table unknown-fr7kr0yrojw-At line 1, column 15[ODBC Firebird Driver][Firebird]Dynamic SQL Error-SQL error code = -204-Table unknown-fr7kr0yrojw-At line 1, column 15        
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+=== TestCloseGroupThenReopenTheSameAlias  failed  516ms
+    [sqlite] raised 2062 The specified Key already exists. (use, line 568)
+    [mssql] raised 2062 The specified Key already exists. (use, line 568)
+    [mariadb] raised 2062 The specified Key already exists. (use, line 568)
+    [postgresql] Connect() to the test database failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: invalid integer value "5432.00" for connection option "port"invalid integer value "5432.00" for connection option "port"  
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [postgresql] raised 1466 Connection handle is invalid. (sqlexec, line 892)
+    [firebird] reopening the alias after CloseGroup() failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: [ODBC Firebird Driver][Firebird]Dynamic SQL Error-SQL error code = -204-Table unknown-fr7kr0yroya-At line 1, column 15[ODBC Firebird Driver][Firebird]Dynamic SQL Error-SQL error code = -204-Table unknown-fr7kr0yroya-At line 1, column 15        
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [firebird] reopening the alias after Close() failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: [ODBC Firebird Driver][Firebird]Dynamic SQL Error-SQL error code = -204-Table unknown-fr7kr0yroya-At line 1, column 15[ODBC Firebird Driver][Firebird]Dynamic SQL Error-SQL error code = -204-Table unknown-fr7kr0yroya-At line 1, column 15        
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+=== TestRefreshReloadsAReadOnlyCursor  failed  906ms
+    [sqlite] after Refresh() the cursor has 1 rows, expected 2
+    [mssql] after Refresh() the cursor has 1 rows, expected 2
+    [mariadb] after Refresh() the cursor has 1 rows, expected 2
+    [postgresql] Connect() to the test database failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: invalid integer value "5432.00" for connection option "port"invalid integer value "5432.00" for connection option "port"  
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [postgresql] raised 1466 Connection handle is invalid. (sqlexec, line 892)
+    [firebird] raised 13 Alias 'C_FRH' is not found. (requery, line 586)
+=== TestRefreshRefusesWithPendingChanges  failed  813ms
+    [sqlite] Refresh() with a pending change returned .T.
+    [sqlite] cLastErrorCode = '', expected pending_changes
+    [mssql] Refresh() with a pending change returned .T.
+    [mssql] cLastErrorCode = '', expected pending_changes
+    [mariadb] Refresh() with a pending change returned .T.
+    [mariadb] cLastErrorCode = '', expected pending_changes
+    [postgresql] Connect() to the test database failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: invalid integer value "5432.00" for connection option "port"invalid integer value "5432.00" for connection option "port"  
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [postgresql] raised 1466 Connection handle is invalid. (sqlexec, line 892)
+=== TestCloseAllLeavesTheUsersCursorsOpen  failed  610ms
+    [postgresql] Connect() to the test database failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: invalid integer value "5432.00" for connection option "port"invalid integer value "5432.00" for connection option "port"  
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [postgresql] raised 1466 Connection handle is invalid. (sqlexec, line 892)
+=== TestAccentedTextRoundTrip  failed  969ms
+    [sqlite] SQLite holds hex 5065F16120C16C7661726F2080352020202020202020202020202020202020202020202020202020, expected the UTF-8 5065C3B16120C3816C7661726F20E282AC35
+    [mssql] another connection reads hex 5065F16120C16C7661726F2080352020202020202020202020202020202020202020202020202020, sent 5065F16120C16C7661726F208035
+    [mariadb] another connection reads hex 5065F16120C16C7661726F2080352020202020202020202020202020202020202020202020202020, sent 5065F16120C16C7661726F208035
+    [postgresql] Connect() to the test database failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: invalid integer value "5432.00" for connection option "port"invalid integer value "5432.00" for connection option "port"  
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [postgresql] raised 1466 Connection handle is invalid. (sqlexec, line 892)
+    [firebird] another connection reads hex 2E4E554C4C2E, sent 5065F16120C16C7661726F208035
+    [firebird] FoxRemote reads it back as hex <no cursor>
+=== TestSaveDoesNotPadVarchar  failed  781ms
+    [sqlite] the server stores 40 characters for 'short'
+    [mssql] the server stores 40 characters for 'short'
+    [mariadb] the server stores 40 characters for 'short'
+    [postgresql] Connect() to the test database failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: invalid integer value "5432.00" for connection option "port"invalid integer value "5432.00" for connection option "port"  
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [postgresql] raised 1466 Connection handle is invalid. (sqlexec, line 892)
+    [firebird] the server stores -1 characters for 'short'
+=== TestLongTextRoundTrip  failed  812ms
+    [sqlite] the server stores 0 characters of a 303-character text
+    [sqlite] the long text did not come back whole
+    [mssql] the server stores 0 characters of a 303-character text
+    [mssql] the long text did not come back whole
+    [postgresql] Connect() to the test database failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: invalid integer value "5432.00" for connection option "port"invalid integer value "5432.00" for connection option "port"  
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [postgresql] raised 1466 Connection handle is invalid. (sqlexec, line 892)
+    [firebird] the server stores -1 characters of a 303-character text
+    [firebird] the long text did not come back whole
+=== TestEmptyDateIsStoredAsNull  failed  922ms
+    [sqlite] an empty date did not arrive as NULL: .NULL.
+    [mssql] an empty date did not arrive as NULL: 01-01-1900
+    [mariadb] Save() failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: [ma-3.2.9][11.8.9-MariaDB]Incorrect date value: '' for column `foxremote_test`.`fr7kr0yrtdn`.`born` at row 1[ma-3.2.9][11.8.9-MariaDB]Incorrect date value: '' for column `foxremote_test`.`fr7kr0yrtdn`.`born` at row 1
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [mariadb] an empty date did not arrive as NULL: .NULL.
+    [postgresql] Connect() to the test database failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: invalid integer value "5432.00" for connection option "port"invalid integer value "5432.00" for connection option "port"  
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [postgresql] raised 1466 Connection handle is invalid. (sqlexec, line 892)
+    [firebird] an empty date did not arrive as NULL: .NULL.
+=== TestServerTextIsNotUcs2  failed  141ms
+    [sqlite] ServerVersion() = '3<NUL>.<NUL>4<NUL>3<NUL>.<NUL>2<NUL>'
+    [mssql] ServerVersion() = 'M<NUL>i<NUL>c<NUL>r<NUL>o<NUL>s<NUL>o<NUL>f<NUL>t<NUL> <NUL>S<NUL>Q<NUL>L<NUL> <NUL>S<NUL>e<NUL>r<NUL>v<NUL>e<NUL>r<NUL> <NUL>2<NUL>0<NUL>2<NUL>5<NUL> <NUL>(<NUL>R<NUL>T<NUL>M<NUL>)<NUL> <NUL>-<NUL> <NUL>1<NUL>7<NUL>.<NUL>0<NUL>.<NUL>1<NUL>0<NUL>0<NUL>0<NUL>.<NUL>7<NUL> <NUL>(<NUL>X<NUL>6<NUL>4<NUL>)<NUL> <NUL>
+    <NUL>	<NUL>O<NUL>c<NUL>t<NUL> <NUL>2<NUL>1<NUL> <NUL>2<NUL>0<NUL>2<NUL>5<NUL> <NUL>1<NUL>2<NUL>:<NUL>0<NUL>5<NUL>:<NUL>5<NUL>7<NUL> <NUL>
+    <NUL>	<NUL>C<NUL>o<NUL>p<NUL>y<NUL>r<NUL>i<NUL>g<NUL>h<NUL>t<NUL> <NUL>(<NUL>C<NUL>)<NUL> <NUL>2<NUL>0<NUL>2<NUL>5<NUL> <NUL>M<NUL>i<NUL>c<NUL>r<NUL>o<NUL>s<NUL>o<NUL>f<NUL>t<NUL> <NUL>C<NUL>o<NUL>r<NUL>p<NUL>o<NUL>r<NUL>a<NUL>t<NUL>i<NUL>o<NUL>n<NUL>
+    <NUL>	<NUL>E<NUL>x<NUL>p<NUL>r<NUL>e<NUL>s<NUL>s<NUL> <NUL>E<NUL>d<NUL>i<NUL>t<NUL>i<NUL>o<NUL>n<NUL> <NUL>(<NUL>6<NUL>4<NUL>-<NUL>b<NUL>i<NUL>t<NUL>)<NUL> <NUL>o<NUL>n<NUL> <NUL>W<NUL>i<NUL>n<NUL>d<NUL>o<NUL>w<NUL>s<NUL> <NUL>1<NUL>0<NUL> <NUL>P<NUL>r<NUL>o<NUL> <NUL>1<NUL>0<NUL>.<NUL>0<NUL> <NUL><<NUL>X<NUL>6<NUL>4<NUL>><NUL> <NUL>(<NUL>B<NUL>u<NUL>i<NUL>l<NUL>d<NUL> <NUL>2<NUL>6<NUL>2<NUL>0<NUL>0<NUL>:<NUL> <NUL>)<NUL> <NUL>(<NUL>H<NUL>y<NUL>p<NUL>e<NUL>r<NUL>v<NUL>i<NUL>s<NUL>o<NUL>r<NUL>)<NUL>
+    <NUL>'
+    [postgresql] Connect() to the test database failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: invalid integer value "5432.00" for connection option "port"invalid integer value "5432.00" for connection option "port"  
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [postgresql] raised 1466 Connection handle is invalid. (sqlexec, line 892)
+    [firebird] raised 13 Alias '_7KR0YRTOC' is not found. (getversion, line 2346)
+=== TestGetPrimaryKey  failed  609ms
+    [sqlite] GetPrimaryKey() = '', expected id
+    [mssql] GetPrimaryKey() = '', expected id
+    [mariadb] GetPrimaryKey() = '', expected id
+    [postgresql] Connect() to the test database failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: invalid integer value "5432.00" for connection option "port"invalid integer value "5432.00" for connection option "port"  
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [postgresql] raised 1466 Connection handle is invalid. (sqlexec, line 892)
+    [firebird] GetPrimaryKey() = '', expected id
+=== TestGetTablesReturnsACursor  failed  860ms
+    [sqlite] raised 1806 SQL: Column 'TABLE_NAME' is not found. (gettables, line 1237)
+    [mssql] GetTables() lists 1 of the 2 new tables
+    [mariadb] GetTables() lists 0 of the 2 new tables
+    [postgresql] Connect() to the test database failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: invalid integer value "5432.00" for connection option "port"invalid integer value "5432.00" for connection option "port"  
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [postgresql] raised 1466 Connection handle is invalid. (sqlexec, line 892)
+    [firebird] raised 1806 SQL: Column 'TABLE_NAME' is not found. (gettables, line 1237)
+=== TestGetColumnsReturnsACursor  failed  469ms
+    [sqlite] raised 1806 SQL: Column 'COLUMN_NAME' is not found. (gettablefields, line 1258)
+    [mssql] GetColumns() lists 1 columns, expected 6
+    [mssql] the id column is not marked as primary_key
+    [mssql] the born column is not marked nullable
+    [mariadb] GetColumns() lists 0 columns, expected 6
+    [mariadb] the id column is not marked as primary_key
+    [mariadb] the born column is not marked nullable
+    [postgresql] Connect() to the test database failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: invalid integer value "5432.00" for connection option "port"invalid integer value "5432.00" for connection option "port"  
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [postgresql] raised 1466 Connection handle is invalid. (sqlexec, line 892)
+    [firebird] raised 1806 SQL: Column 'COLUMN_NAME' is not found. (gettablefields, line 1258)
+=== TestLastIdAfterExecute  failed  828ms
+    [sqlite] raised 1734 Property GETLASTIDSCRIPT is not found. (getlastid, line 1306)
+    [mssql] LastId() = 0 (type N), the server gave 1
+    [mariadb] LastId() = 0                    (type C), the server gave 1
+    [postgresql] Connect() to the test database failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: invalid integer value "5432.00" for connection option "port"invalid integer value "5432.00" for connection option "port"  
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [postgresql] raised 1466 Connection handle is invalid. (sqlexec, line 892)
+    [firebird] raised 1734 Property GETLASTIDSCRIPT is not found. (getlastid, line 1306)
+=== TestMigrateRefusesAnExistingTable  failed  891ms
+    [sqlite] cLastErrorCode = '', expected table_exists
+    [sqlite] Migrate() destroyed the table that was on the server
+    [mssql] cLastErrorCode = '', expected table_exists
+    [mssql] Migrate() destroyed the table that was on the server
+    [mariadb] cLastErrorCode = '', expected table_exists
+    [mariadb] Migrate() destroyed the table that was on the server
+    [postgresql] Connect() to the test database failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: invalid integer value "5432.00" for connection option "port"invalid integer value "5432.00" for connection option "port"  
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [postgresql] raised 1466 Connection handle is invalid. (sqlexec, line 892)
+    [firebird] cLastErrorCode = '', expected table_exists
+    [firebird] Migrate() destroyed the table that was on the server
+=== TestMigrateReplaceCopiesRowsWithUsableNames  failed  797ms
+    [sqlite] report: nTables 0, nRows 0, nErrors 0
+    [sqlite] the server table has -1 rows, expected 2
+    [sqlite] a plain SELECT with the column names fails: 
+    [sqlite] the empty DBF date did not arrive as NULL
+    [mssql] report: nTables 0, nRows 0, nErrors 0
+    [mssql] the empty DBF date did not arrive as NULL
+    [mariadb] report: nTables 0, nRows 0, nErrors 0
+    [mariadb] the empty DBF date did not arrive as NULL
+    [postgresql] Connect() to the test database failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: invalid integer value "5432.00" for connection option "port"invalid integer value "5432.00" for connection option "port"  
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [postgresql] raised 1466 Connection handle is invalid. (sqlexec, line 892)
+    [firebird] report: nTables 0, nRows 0, nErrors 1
+    [firebird] the server table has -1 rows, expected 2
+    [firebird] a plain SELECT with the column names fails: 
+    [firebird] the empty DBF date did not arrive as NULL
+=== TestMigrateOfAFolderKeepsTheDefaultDirectory  failed  312ms
+    [sqlite] the default directory moved to C:\DESARROLLO\IRWINRODRIGUEZ.DEV\FOXREMOTE\TESTS\.DATA\DIR7KR0YRX6H
+    [mssql] the default directory moved to C:\DESARROLLO\IRWINRODRIGUEZ.DEV\FOXREMOTE\TESTS\.DATA\DIR7KR0YRX6L
+    [mariadb] the default directory moved to C:\DESARROLLO\IRWINRODRIGUEZ.DEV\FOXREMOTE\TESTS\.DATA\DIR7KR0YRXCN
+    [postgresql] Connect() to the test database failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: invalid integer value "5432.00" for connection option "port"invalid integer value "5432.00" for connection option "port"  
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [postgresql] raised 1466 Connection handle is invalid. (sqlexec, line 892)
+    [firebird] the default directory moved to C:\DESARROLLO\IRWINRODRIGUEZ.DEV\FOXREMOTE\TESTS\.DATA\DIR7KR0YRXDX
+=== TestCreateTableFromCursorKeepsCharacterColumns  failed  375ms
+    [sqlite] Open() of the new table failed: Error - Tabla Inexistente:
+    La tabla con el nombre 'fr7kr0yrxf7' no existe en la base de datos.
+    Por favor, asegúrate de que el nombre de la tabla está escrito correctamente y que la tabla haya sido creada previamente en la base de datos.
+    [postgresql] Connect() to the test database failed: ERROR - Error en la Consulta SQL:
+    Código de Error: 1526
+    Mensaje de Error: Connectivity error: invalid integer value "5432.00" for connection option "port"invalid integer value "5432.00" for connection option "port"  
+    Por favor, revisa la consulta SQL y asegúrate de que está correctamente escrita. Verifica que los nombres de tablas, campos y condiciones sean válidos y vuelve a intentarlo.
+    [postgresql] raised 1466 Connection handle is invalid. (sqlexec, line 892)
+    [firebird] Open() of the new table failed: Error - Tabla Inexistente:
+    La tabla con el nombre 'fr7kr0yrxoc' no existe en la base de datos.
+    Por favor, asegúrate de que el nombre de la tabla está escrito correctamente y que la tabla haya sido creada previamente en la base de datos.
+=== TestLibraryHasNoUserInterface  failed  0ms
+    user interface in foxremote.prg:
+    148: 					MessageBox(this.cLastError, 16)
+    303: 					MessageBox(this.cLastError, 48)
+    472: 				MessageBox(this.cLastError, 16)
+    539: 					Wait Window "Recuperando información de la tabla actual
+    541: 				=Inkey(0.3, "H")
+    542: 				Doevents		
+    913: 					MessageBox(this.cLastError, 16)
+    919: 				MessageBox(this.cLastError, 16)
+    1098: 			Messagebox(this.cLastError, 16)
+    1518: 				Messagebox(this.cLastError, 16, "Error: Base de Datos No
+    1753: 			    MessageBox(this.cLastError, 16)
+    1945: 				MESSAGEBOX(this.cLastError, 16, "Error")
+    2190: 			    MessageBox(this.cLastError, 16)
+    2683: 			    MessageBox(this.cLastError, 16)
+    2695: 			    MessageBox(this.cLastError, 16)
+    3125: 			    MessageBox(this.cLastError, 16)
+    3137: 			    MessageBox(this.cLastError, 16)
+    3386: 		    MessageBox(this.cLastError, 48, "DBCraft")
+    3463: 		        messagebox(this.cLastError, 48)
+    3621: 			    MessageBox(this.cLastError, 16)
