@@ -21,7 +21,7 @@ Windows. These are the drivers it is tested with:
 
 | Engine | Class | `cDriver` | Tested with |
 |---|---|---|---|
-| SQL Server | `RemoteSqlServer` | `ODBC Driver 17 for SQL Server` | SQL Server 2025 Express |
+| SQL Server | `RemoteSqlServer` | `ODBC Driver 18 for SQL Server` (see [Pitfalls](#pitfalls)) or `ODBC Driver 17 for SQL Server` | SQL Server 2025 Express, with drivers 18.5 and 17.10 |
 | MySQL | `RemoteMySql` | `MariaDB ODBC 3.2 Driver` | MySQL 8.4.11 |
 | MariaDB | `RemoteMariaDb` | `MariaDB ODBC 3.2 Driver` | MariaDB 11.8 |
 | PostgreSQL | `RemotePostgreSql` | `PostgreSQL ANSI` (psqlODBC) | PostgreSQL 18.6 |
@@ -104,7 +104,8 @@ The same code runs on every engine. Only the class and the connection properties
 
 ```foxpro
 loDb = CREATEOBJECT("RemoteSqlServer")
-loDb.cDriver = "ODBC Driver 17 for SQL Server"
+loDb.cDriver = "ODBC Driver 18 for SQL Server"
+loDb.cConnectionOptions = "TrustServerCertificate=yes;"   && only for a server without a trusted certificate
 loDb.cServer = "localhost\SQLEXPRESS"
 loDb.cDatabase = "erp"
 loDb.lTrustedConnection = .T.        && Windows authentication; or cUser and cPassword
@@ -554,7 +555,7 @@ ENDTRY
   statement on that connection crashed VFP (`C0000005`) two times out of three; the Unicode
   driver delivers memo fields in UCS-2.
 - **SQL Server: `VARCHAR(MAX)` and `NVARCHAR(MAX)` arrive in `Query()` as `C(0)`, empty.** That
-  is how VFP types them with ODBC Driver 17. `Open()` reads them right, but in your own SQL you
+  is how VFP types them with ODBC Driver 17 and 18. `Open()` reads them right, but in your own SQL you
   have to cast them: `CAST(CAST(notes AS VARCHAR(MAX)) AS TEXT) AS notes` reaches VFP as a memo.
 - **Firebird: `LastId()` is not safe with several users.** Firebird has no "last id of this
   session"; `LastId()` reads the current value of the identity generator of the table of your
@@ -580,10 +581,16 @@ ENDTRY
   library, where a `LOCAL` of yours is out of scope. Use `:name` and `oParams`.
 - **`Rollback()` after a `Save()` inside your own transaction leaves the cursor showing the saved
   values**, which are no longer on the server. `Refresh()` it, or `Close()` and `Open()` again.
+- **SQL Server's ODBC Driver 18 encrypts the connection and checks the server's certificate.**
+  Against a server with a self-signed certificate (SQL Server Express installs one) `Connect()`
+  fails with `connection_failed`, and `cLastError` carries the driver's reason: *the certificate
+  chain was issued by an authority that is not trusted*. Install a certificate the clients
+  trust, or add `TrustServerCertificate=yes;` to `cConnectionOptions` (still encrypted, but the
+  server is not verified), or `Encrypt=no;`. Driver 17 does not encrypt unless asked.
 - **SQL Server's ODBC Driver 17 reopens a dropped idle connection by itself**
-  (`ConnectRetryCount`, 1 by default), outside a transaction. The library's own reconnection
-  works on top of it; add `ConnectRetryCount=0;` to `cConnectionOptions` to leave it to the
-  library alone.
+  (`ConnectRetryCount`, 1 by default), outside a transaction; Driver 18 has the same option. The
+  library's own reconnection works on top of it; add `ConnectRetryCount=0;` to
+  `cConnectionOptions` to leave it to the library alone.
 - **Firebird waits for a locked row forever.** Its ODBC driver starts transactions with `WAIT`
   and no limit, so a `Save()` or a `NextNumber()` behind another session's open transaction
   hangs until that one ends. The driver's `LOCKTIMEOUT` option does not reach the transactions
@@ -597,7 +604,16 @@ ENDTRY
   it sends and what it reads in `Query()`, `Scalar()` and `Open()`; text you read with your own
   `SQLEXEC()` on `nHandle` arrives in UTF-8.
 
-## Changes from 0.x
+## Changes
+
+### 1.0.1
+
+- A failed connection says why: `cLastError`, `nLastError` and `cLastSqlState` carry the driver's
+  reason (a wrong password, a refused certificate). In 1.0.0 they said only `connection failed`.
+- `VfpName()` is no longer public. It was an internal helper and never part of the API.
+- Tested with ODBC Driver 18 for SQL Server; see its certificate check in [Pitfalls](#pitfalls).
+
+### From 0.x to 1.0
 
 The 1.0 is a new API. The 0.x is kept as it was in [legacy/foxremote.prg](legacy/foxremote.prg).
 

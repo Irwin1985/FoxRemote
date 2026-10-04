@@ -65,7 +65,7 @@ DEFINE CLASS TestRemoteIntegration AS Custom
 		LOCAL loDb
 		loDb = toE.NewDb()
 		IF toE.cName == "mssql"
-			loDb.cConnectionOptions = "ConnectRetryCount=0;"
+			loDb.cConnectionOptions = loDb.cConnectionOptions + "ConnectRetryCount=0;"
 		ENDIF
 		This.Check(loDb.Connect(), "Connect() to the test database failed: " + TRANSFORM(loDb.cLastError))
 		RETURN loDb
@@ -209,6 +209,8 @@ DEFINE CLASS TestRemoteIntegration AS Custom
 		This.Check(!llOk, "Connect() with a wrong password returned .T.")
 		This.Check(loDb.nErrors >= 1, "nErrors = " + TRANSFORM(loDb.nErrors) + " after a failed Connect()")
 		This.Check(loDb.cLastErrorCode == "connection_failed", "cLastErrorCode = '" + loDb.cLastErrorCode + "', expected connection_failed")
+		* The driver's reason has to reach cLastError: a wrong password, a refused certificate...
+		This.Check(LEN(loDb.cLastError) > LEN("connection failed: ") AND !EMPTY(loDb.cLastSqlState), "the failure says no reason: '" + loDb.cLastError + "', SQLSTATE '" + loDb.cLastSqlState + "'")
 		loDb.Disconnect()
 	ENDPROC
 
@@ -1329,7 +1331,7 @@ DEFINE CLASS TestRemoteIntegration AS Custom
 		toE.RawRun("INSERT INTO " + lcT + " (name, last_no) VALUES ('invoice', 0)")
 		loA = This.Connected(toE)
 		loB = toE.NewDb()
-		loB.cConnectionOptions = toE.LockWaitOptions()
+		loB.cConnectionOptions = loB.cConnectionOptions + toE.LockWaitOptions()
 		This.Check(loB.Connect(), "the second session did not connect: " + loB.cLastError)
 		toE.ShortLockWait(loB)
 		loP = CREATEOBJECT("Empty")

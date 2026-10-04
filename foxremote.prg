@@ -25,7 +25,7 @@ RETURN
 * RemoteDatabase: what every engine shares.
 * ======================================================================== *
 DEFINE CLASS RemoteDatabase AS Custom
-	cVersion = "1.0.0"
+	cVersion = "1.0.1"
 	cEngine = ""
 
 	* Connection
@@ -72,8 +72,9 @@ DEFINE CLASS RemoteDatabase AS Custom
 	* The row count of an UPDATE is the rows it changed, not the rows it found (MySQL, MariaDB).
 	lCountsChangedRows = .F.
 
-	PROTECTED oCursors, lAttached, cLastInsertTable, tLastActivity
+	PROTECTED oCursors, lAttached, cLastInsertTable, tLastActivity, oOpenError
 	oCursors = .NULL.
+	oOpenError = .NULL.
 	lAttached = .F.
 	cLastInsertTable = ""
 	tLastActivity = {}
@@ -172,7 +173,7 @@ DEFINE CLASS RemoteDatabase AS Custom
 	* Connection
 	* ==================================================================== *
 	FUNCTION Connect
-		LOCAL lcConn, lnHandle, lnOldLogin, lnOldTimeout
+		LOCAL lcConn, lnHandle, lnOldLogin, lnOldTimeout, loErr
 		IF This.nHandle > 0
 			IF !This.lAutoReconnect OR This.Ping()
 				RETURN .T.
@@ -185,10 +186,11 @@ DEFINE CLASS RemoteDatabase AS Custom
 		lcConn = IIF(EMPTY(This.cConnectionString), This.BuildConnectionString(This.cDatabase), This.cConnectionString)
 		lnHandle = This.OpenHandle(lcConn)
 		IF lnHandle < 1
+			loErr = This.oOpenError
 			IF !This.lFileDatabase AND !EMPTY(This.cDatabase) AND EMPTY(This.cConnectionString) AND This.ServerReachableWithoutDatabase()
 				RETURN This.Fail("database_not_found", "database not found: " + This.cDatabase)
 			ENDIF
-			RETURN This.Fail("connection_failed", "connection failed", .T.)
+			RETURN This.Fail("connection_failed", "connection failed", loErr)
 		ENDIF
 		This.nHandle = lnHandle
 		This.lAttached = .F.
@@ -303,7 +305,7 @@ DEFINE CLASS RemoteDatabase AS Custom
 		ENDIF
 		lnH = This.OpenHandle(This.BuildConnectionString(This.MaintenanceDatabase()))
 		IF lnH < 1
-			RETURN This.Fail("connection_failed", "connection failed", .T.)
+			RETURN This.Fail("connection_failed", "connection failed", This.oOpenError)
 		ENDIF
 		lvCount = This.HandleScalar(lnH, This.DatabaseExistsSql(tcDatabase))
 		=SQLDISCONNECT(lnH)
@@ -326,7 +328,7 @@ DEFINE CLASS RemoteDatabase AS Custom
 		LOCAL lnH, lnR
 		lnH = This.OpenHandle(This.BuildConnectionString(This.MaintenanceDatabase()))
 		IF lnH < 1
-			RETURN This.Fail("connection_failed", "connection failed", .T.)
+			RETURN This.Fail("connection_failed", "connection failed", This.oOpenError)
 		ENDIF
 		This.cLastSql = This.CreateDatabaseSql(tcDatabase)
 		lnR = SQLEXEC(lnH, This.cLastSql)
@@ -359,6 +361,8 @@ DEFINE CLASS RemoteDatabase AS Custom
 		=SQLSETPROP(0, "DispLogin", 3)
 		=SQLSETPROP(0, "ConnectTimeOut", This.nConnectTimeout)
 		lnH = SQLSTRINGCONNECT(tcConnection, .T.)
+		* The driver's reason, taken now: the SQLSETPROP() calls below clear what AERROR() returns.
+		This.oOpenError = IIF(lnH < 1, This.OdbcError(), .NULL.)
 		=SQLSETPROP(0, "DispLogin", lnOldLogin)
 		=SQLSETPROP(0, "ConnectTimeOut", lnOldTimeout)
 		RETURN lnH
@@ -1343,7 +1347,7 @@ DEFINE CLASS RemoteDatabase AS Custom
 
 	* A name that comes from VFP (AFIELDS, a .dbf file name) has no case of its own: VFP gives it in
 	* capitals. Where the engine keeps names as written (SQL Server), it goes in lower case.
-	FUNCTION VfpName(tcName)
+	PROTECTED FUNCTION VfpName(tcName)
 		RETURN IIF(This.cNameCase == "asis", LOWER(ALLTRIM(tcName)), This.NaturalName(tcName))
 	ENDFUNC
 
@@ -2216,7 +2220,7 @@ DEFINE CLASS RemoteFirebird AS RemoteDatabase
 		LOCAL lnH, lnR
 		lnH = This.OpenHandle(This.BuildConnectionString(This.cDatabase))
 		IF lnH < 1
-			RETURN This.Fail("connection_failed", "CreateDatabase() needs cDatabase to name an existing database of the server", .T.)
+			RETURN This.Fail("connection_failed", "CreateDatabase() needs cDatabase to name an existing database of the server", This.oOpenError)
 		ENDIF
 		This.cLastSql = "CREATE DATABASE '" + STRTRAN(tcDatabase, "'", "''") + "' USER '" + STRTRAN(This.cUser, "'", "''") + ;
 			"' PASSWORD '" + STRTRAN(This.cPassword, "'", "''") + "' PAGE_SIZE 8192 DEFAULT CHARACTER SET WIN1252"
@@ -2330,7 +2334,7 @@ DEFINE CLASS RemoteSqlite AS RemoteDatabase
 		LOCAL lnH
 		lnH = This.OpenHandle(This.BuildConnectionString(tcDatabase))
 		IF lnH < 1
-			RETURN This.Fail("connection_failed", "the database could not be created", .T.)
+			RETURN This.Fail("connection_failed", "the database could not be created", This.oOpenError)
 		ENDIF
 		=SQLEXEC(lnH, "PRAGMA user_version = 0")
 		=SQLDISCONNECT(lnH)

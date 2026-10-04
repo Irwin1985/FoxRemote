@@ -99,6 +99,9 @@ DEFINE CLASS FrEngine AS Custom
 	cSemicolonPassword = ""
 	cDataDir = ""
 	cLastError = ""
+	* Connection options of the engine's section (options=), for every connection the tests open:
+	* ODBC Driver 18 for SQL Server needs TrustServerCertificate=yes against a self-signed server.
+	cOptions = ""
 
 	PROCEDURE Init(tcName)
 		LOCAL lcIni, lcSection
@@ -114,6 +117,7 @@ DEFINE CLASS FrEngine AS Custom
 		This.cDatabase = FrIniValue(lcIni, lcSection, IIF(This.cName == "sqlite", "database", "test_database"))
 		This.cSemicolonUser = FrIniValue(lcIni, lcSection, "user")
 		This.cSemicolonPassword = FrIniValue(lcIni, lcSection, "password")
+		This.cOptions = FrIniValue(lcIni, lcSection, "options")
 		DO CASE
 		CASE This.cName == "sqlite"
 			This.cClass = "RemoteSqlite"
@@ -151,6 +155,7 @@ DEFINE CLASS FrEngine AS Custom
 		loDb.cUser = This.cUser
 		loDb.cPassword = This.cPassword
 		loDb.cDatabase = This.DatabaseRef(IIF(EMPTY(tcDatabase), This.cDatabase, tcDatabase))
+		loDb.cConnectionOptions = This.cOptions
 		RETURN loDb
 	ENDFUNC
 
@@ -162,7 +167,7 @@ DEFINE CLASS FrEngine AS Custom
 		CASE This.cName == "sqlite"
 			RETURN "DRIVER={" + This.cDriver + "};DATABASE=" + lcDb + ";NoWCHAR=1;FKSupport=1;"
 		CASE This.cName == "mssql"
-			RETURN "DRIVER={" + This.cDriver + "};SERVER=" + This.cServer + ";UID=" + This.cUser + ";PWD={" + This.cPassword + "};DATABASE=" + lcDb + ";"
+			RETURN "DRIVER={" + This.cDriver + "};SERVER=" + This.cServer + ";UID=" + This.cUser + ";PWD={" + This.cPassword + "};DATABASE=" + lcDb + ";" + This.cOptions
 		CASE INLIST(This.cName, "mysql", "mariadb")
 			RETURN "DRIVER={" + This.cDriver + "};SERVER=" + This.cServer + ";PORT=" + TRANSFORM(This.nPort) + ";UID=" + This.cUser + ;
 				";PWD={" + This.cPassword + "};DATABASE=" + lcDb + ";"
@@ -356,7 +361,7 @@ DEFINE CLASS FrEngine AS Custom
 	* SQL Server: KILL and the session list need an administrator (Windows authentication).
 	FUNCTION AdminRun(tcSql)
 		LOCAL lnH, lnR, laErr[1]
-		lnH = SQLSTRINGCONNECT("DRIVER={" + This.cDriver + "};SERVER=" + This.cServer + ";Trusted_Connection=yes;DATABASE=master;", .T.)
+		lnH = SQLSTRINGCONNECT("DRIVER={" + This.cDriver + "};SERVER=" + This.cServer + ";Trusted_Connection=yes;DATABASE=master;" + This.cOptions, .T.)
 		IF lnH < 1
 			This.cLastError = "admin connect failed"
 			RETURN .F.
@@ -373,7 +378,7 @@ DEFINE CLASS FrEngine AS Custom
 	FUNCTION AdminScalar(tcSql)
 		LOCAL lnH, lvValue
 		lvValue = .NULL.
-		lnH = SQLSTRINGCONNECT("DRIVER={" + This.cDriver + "};SERVER=" + This.cServer + ";Trusted_Connection=yes;DATABASE=master;", .T.)
+		lnH = SQLSTRINGCONNECT("DRIVER={" + This.cDriver + "};SERVER=" + This.cServer + ";Trusted_Connection=yes;DATABASE=master;" + This.cOptions, .T.)
 		IF lnH > 0
 			IF SQLEXEC(lnH, tcSql, "c_fr_adm") > 0 AND USED("c_fr_adm")
 				lvValue = EVALUATE("c_fr_adm." + FIELD(1, "c_fr_adm"))

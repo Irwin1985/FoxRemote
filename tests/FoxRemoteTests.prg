@@ -141,6 +141,31 @@ DEFINE CLASS TestRemoteSql AS Custom
 	ENDPROC
 
 	* Names from VFP (AFIELDS, .dbf files) come in capitals and carry no case: lower case in SQL Server.
+	* The public methods are the ones README.md documents, and no more: a helper that is not part
+	* of the API is PROTECTED (VfpName() was public in 1.0.0).
+	PROCEDURE TestPublicMethodsAreTheDocumentedOnes() HELP [Fact, Trait("Category", "Surface")]
+		LOCAL loDb, loBase, laM[1], laB[1], lnI, lcBase, lcActual, lcExpected
+		loDb = CREATEOBJECT("RemoteSqlite")
+		loBase = CREATEOBJECT("Custom")
+		lcBase = ","
+		FOR lnI = 1 TO AMEMBERS(laB, loBase, 1)
+			lcBase = lcBase + UPPER(laB[lnI, 1]) + ","
+		ENDFOR
+		lcActual = ""
+		FOR lnI = 1 TO AMEMBERS(laM, loDb, 1)
+			IF laM[lnI, 2] == "Method" AND !(("," + UPPER(laM[lnI, 1]) + ",") $ lcBase)
+				lcActual = lcActual + IIF(EMPTY(lcActual), "", ",") + UPPER(laM[lnI, 1])
+			ENDIF
+		ENDFOR
+		lcExpected = "ATTACH,BEGINTRANSACTION,CLEARERRORS,CLOSE,CLOSEALL,CLOSEGROUP,COLUMNEXISTS,"
+		lcExpected = lcExpected + "COMMIT,CONNECT,CREATEDATABASE,CREATETABLE,CREATETABLEFROMCURSOR,DATABASEEXISTS,"
+		lcExpected = lcExpected + "DISCARD,DISCONNECT,EXECUTE,GENERATESCRIPT,GETCOLUMNS,GETPRIMARYKEY,GETTABLES,"
+		lcExpected = lcExpected + "HASCHANGES,LASTID,MIGRATE,NATURALNAME,NEWGUID,NEWTABLEDEF,NEXTNUMBER,OPEN,PING,"
+		lcExpected = lcExpected + "QUERY,REFRESH,ROLLBACK,SAVE,SAVEGROUP,SCALAR,SERVERDATE,SERVERVERSION,"
+		lcExpected = lcExpected + "TABLEEXISTS,TABLESCRIPT,USEDATABASE"
+		__assert.Equal(lcExpected, lcActual)
+	ENDPROC
+
 	PROCEDURE TestNamesFromVfpAreLowerCaseInSqlServer() HELP [Fact, Trait("Category", "Names")]
 		__assert.Equal("customers", This.C("sqlserver", "VfpName", "CUSTOMERS"))
 		__assert.Equal("CUSTOMERS", This.C("firebird", "VfpName", "customers"))
@@ -566,7 +591,7 @@ DEFINE CLASS TestRemoteSql AS Custom
 	PROCEDURE TestDefaults() HELP [Fact, Trait("Category", "Offline")]
 		LOCAL loDb
 		loDb = CREATEOBJECT("RemotePostgreSql")
-		__assert.Equal("1.0.0", loDb.cVersion)
+		__assert.Equal("1.0.1", loDb.cVersion)
 		__assert.Equal(0, loDb.nErrors)
 		__assert.False(loDb.lStrict)
 		__assert.Equal("null", loDb.cEmptyDateMode)

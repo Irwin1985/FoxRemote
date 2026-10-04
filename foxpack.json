@@ -1,6 +1,6 @@
 {
   "name": "foxremote",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "One API for SQL Server, MySQL, MariaDB, PostgreSQL, Firebird and SQLite from VFP 9 through ODBC: named parameters, transactions, buffered cursors that save their changes, and DBF migration.",
   "license": "MIT",
   "files": [
