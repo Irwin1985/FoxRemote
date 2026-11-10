@@ -280,6 +280,222 @@ DEFINE CLASS TestRemoteIntegration AS Custom
 		toE.DropTable(lcT)
 	ENDPROC
 
+	PROCEDURE TestQueryWithACustomBasedParamsObject() HELP [Fact, Trait("Category", "Query"), Timeout(180000)]
+		This.OnEachEngine("QueryWithACustomBasedParamsObject")
+	ENDPROC
+
+	* A parameters object based on Custom (it carries Objects, Controls and Parent, which GETPEM()
+	* refuses) gives the same row as an Empty. In SQLite the text still travels in UTF-8.
+	PROCEDURE QueryWithACustomBasedParamsObject(toE)
+		LOCAL lcT, loDb, loP, lcCity, lcName, lnI, lcHow, lvRaw
+		lcT = toE.NewName()
+		toE.CreateCustomers(lcT)
+		lcCity = "Logroño"
+		lcName = "Begoña"
+		loDb = This.Connected(toE)
+		* Written through the library, so that SQLite holds the UTF-8 that FoxRemote writes.
+		This.Check(loDb.Execute("INSERT INTO " + lcT + " (name, city) VALUES ('" + lcName + "', '" + lcCity + "')") = 1, "INSERT failed: " + TRANSFORM(loDb.cLastError))
+		This.Check(loDb.Execute("INSERT INTO " + lcT + " (name, city) VALUES ('Luis', 'Lima')") = 1, "INSERT failed: " + TRANSFORM(loDb.cLastError))
+		FOR lnI = 1 TO 2
+			lcHow = IIF(lnI = 1, "Custom", "Empty")
+			loP = CREATEOBJECT(lcHow)
+			ADDPROPERTY(loP, "city", lcCity)
+			This.Check(loDb.Query("SELECT name, city FROM " + lcT + " WHERE city = :city", "c_frq", loP), lcHow + ": Query() with :city failed: " + TRANSFORM(loDb.cLastError))
+			IF USED("c_frq")
+				This.Check(RECCOUNT("c_frq") = 1, lcHow + ": Query() returned " + TRANSFORM(RECCOUNT("c_frq")) + " rows, expected 1")
+				This.Check(ALLTRIM(c_frq.name) == lcName AND ALLTRIM(c_frq.city) == lcCity, lcHow + ": read back name hex " + ;
+					STRCONV(ALLTRIM(c_frq.name), 15) + " and city hex " + STRCONV(ALLTRIM(c_frq.city), 15) + ", sent " + STRCONV(lcName, 15) + " and " + STRCONV(lcCity, 15))
+				USE IN c_frq
+			ENDIF
+		ENDFOR
+		IF toE.cName == "sqlite"
+			* SQLite stores UTF-8: any other tool has to read the same text.
+			lvRaw = toE.RawScalar("SELECT hex(city) FROM " + lcT + " WHERE name <> 'Luis'")
+			This.Check(UPPER(TRANSFORM(lvRaw)) == FrUtf8Hex(lcCity), "SQLite holds hex " + TRANSFORM(lvRaw) + ", expected the UTF-8 " + FrUtf8Hex(lcCity))
+		ELSE
+			This.Check(toE.RawCount(lcT, "city = '" + lcCity + "'") = 1, "another connection does not find the row with city = '" + lcCity + "'")
+		ENDIF
+		loDb.Disconnect()
+		toE.DropTable(lcT)
+	ENDPROC
+
+	PROCEDURE TestQueryWithAMissingParameterFails() HELP [Fact, Trait("Category", "Query"), Timeout(180000)]
+		This.OnEachEngine("QueryWithAMissingParameterFails")
+	ENDPROC
+
+	* A :name without its property in oParams, or without oParams, would open VFP's "View Parameter"
+	* dialog: it fails with bad_argument before anything is sent. A ':' inside quotes is no parameter.
+	PROCEDURE QueryWithAMissingParameterFails(toE)
+		LOCAL lcT, loDb, loP, lnI, lcHow, llOk
+		lcT = toE.NewName()
+		toE.CreateCustomers(lcT)
+		toE.InsertCustomer(lcT, "Ana", "Madrid")
+		loDb = This.Connected(toE)
+		loP = CREATEOBJECT("Empty")
+		ADDPROPERTY(loP, "town", "Madrid")
+		FOR lnI = 1 TO 2
+			lcHow = IIF(lnI = 1, "an oParams without city", "no oParams")
+			IF lnI = 1
+				llOk = loDb.Query("SELECT name FROM " + lcT + " WHERE city = :city", "c_frq", loP)
+			ELSE
+				llOk = loDb.Query("SELECT name FROM " + lcT + " WHERE city = :city", "c_frq")
+			ENDIF
+			This.Check(!llOk, lcHow + ": Query() returned .T.")
+			This.Check(loDb.cLastErrorCode == "bad_argument", lcHow + ": cLastErrorCode = '" + loDb.cLastErrorCode + "', expected bad_argument")
+			This.Check(":city" $ loDb.cLastError, lcHow + ": the message does not name :city: " + loDb.cLastError)
+			This.Check(!USED("c_frq"), lcHow + ": Query() left the cursor c_frq")
+			IF USED("c_frq")
+				USE IN c_frq
+			ENDIF
+		ENDFOR
+		This.Check(loDb.Query("SELECT name FROM " + lcT + " WHERE city <> 'a:b'", "c_frq"), "Query() with ':' inside quotes failed: " + TRANSFORM(loDb.cLastError))
+		This.Check(USED("c_frq") AND RECCOUNT("c_frq") = 1, "Query() with ':' inside quotes did not return the row")
+		IF USED("c_frq")
+			USE IN c_frq
+		ENDIF
+		loDb.Disconnect()
+		toE.DropTable(lcT)
+	ENDPROC
+
+	PROCEDURE TestQueryWithParameterPairs() HELP [Fact, Trait("Category", "Query"), Timeout(180000)]
+		This.OnEachEngine("QueryWithParameterPairs")
+	ENDPROC
+
+	* Name, value pairs after the cursor give the same row as the object of parameters: a city with
+	* an eñe and a date. In SQLite the eñe still travels in UTF-8.
+	PROCEDURE QueryWithParameterPairs(toE)
+		LOCAL lcT, loDb, loP, lcCity, lcName, lnI, lcHow, llOk, lvRaw
+		lcT = toE.NewName()
+		toE.CreateCustomers(lcT)
+		lcCity = "Logroño"
+		lcName = "Begoña"
+		loDb = This.Connected(toE)
+		This.Check(loDb.Execute("INSERT INTO " + lcT + " (name, city, born) VALUES (:name, :city, :born)", ;
+			This.Values("name", lcName, "city", lcCity, "born", {^2026-11-02})) = 1, "INSERT failed: " + TRANSFORM(loDb.cLastError))
+		This.Check(loDb.Execute("INSERT INTO " + lcT + " (name, city, born) VALUES (:name, :city, :born)", ;
+			This.Values("name", "Luis", "city", lcCity, "born", {^2026-11-03})) = 1, "INSERT failed: " + TRANSFORM(loDb.cLastError))
+		FOR lnI = 1 TO 2
+			IF lnI = 1
+				lcHow = "pairs"
+				llOk = loDb.Query("SELECT name, city FROM " + lcT + " WHERE city = :city AND born = :born", "c_frq", "city", lcCity, "born", {^2026-11-02})
+			ELSE
+				lcHow = "object"
+				llOk = loDb.Query("SELECT name, city FROM " + lcT + " WHERE city = :city AND born = :born", "c_frq", This.Values("city", lcCity, "born", {^2026-11-02}))
+			ENDIF
+			This.Check(llOk, lcHow + ": Query() failed: " + TRANSFORM(loDb.cLastError))
+			IF USED("c_frq")
+				This.Check(RECCOUNT("c_frq") = 1, lcHow + ": Query() returned " + TRANSFORM(RECCOUNT("c_frq")) + " rows, expected 1")
+				This.Check(ALLTRIM(c_frq.name) == lcName AND ALLTRIM(c_frq.city) == lcCity, lcHow + ": read back name hex " + ;
+					STRCONV(ALLTRIM(c_frq.name), 15) + " and city hex " + STRCONV(ALLTRIM(c_frq.city), 15) + ", sent " + STRCONV(lcName, 15) + " and " + STRCONV(lcCity, 15))
+				USE IN c_frq
+			ENDIF
+		ENDFOR
+		IF toE.cName == "sqlite"
+			* SQLite stores UTF-8: any other tool has to read the same text.
+			lvRaw = toE.RawScalar("SELECT hex(city) FROM " + lcT + " WHERE name <> 'Luis'")
+			This.Check(UPPER(TRANSFORM(lvRaw)) == FrUtf8Hex(lcCity), "SQLite holds hex " + TRANSFORM(lvRaw) + ", expected the UTF-8 " + FrUtf8Hex(lcCity))
+		ENDIF
+		loDb.Disconnect()
+		toE.DropTable(lcT)
+	ENDPROC
+
+	PROCEDURE TestExecuteAndScalarWithPairs() HELP [Fact, Trait("Category", "Query"), Timeout(180000)]
+		This.OnEachEngine("ExecuteAndScalarWithPairs")
+	ENDPROC
+
+	* An UPDATE with two pairs and a COUNT with one.
+	PROCEDURE ExecuteAndScalarWithPairs(toE)
+		LOCAL lcT, loDb, lnRows, lvN
+		lcT = toE.NewName()
+		toE.CreateCustomers(lcT)
+		toE.InsertCustomer(lcT, "Ana", "Madrid")
+		toE.InsertCustomer(lcT, "Luis", "Lima")
+		loDb = This.Connected(toE)
+		lnRows = loDb.Execute("UPDATE " + lcT + " SET city = :city WHERE name = :name", "city", "Oslo", "name", "Ana")
+		This.Check(lnRows = 1, "Execute() with two pairs = " + TRANSFORM(lnRows) + ", expected 1 row: " + TRANSFORM(loDb.cLastError))
+		This.Check(toE.RawCount(lcT, "name = 'Ana' AND city = 'Oslo'") = 1, "the server does not have Ana in Oslo")
+		This.Check(toE.RawCount(lcT, "name = 'Luis' AND city = 'Lima'") = 1, "the UPDATE touched Luis")
+		lvN = loDb.Scalar("SELECT COUNT(*) FROM " + lcT + " WHERE city = :city", "city", "Oslo")
+		This.Check(VARTYPE(lvN) == "N" AND lvN = 1, "Scalar() with one pair = " + TRANSFORM(lvN) + " (type " + VARTYPE(lvN) + "), expected the number 1: " + TRANSFORM(loDb.cLastError))
+		loDb.Disconnect()
+		toE.DropTable(lcT)
+	ENDPROC
+
+	PROCEDURE TestOpenWithParamsHelper() HELP [Fact, Trait("Category", "Query"), Timeout(180000)]
+		This.OnEachEngine("OpenWithParamsHelper")
+	ENDPROC
+
+	* Params() where oParams is not the last argument: Open() with Save(), and OpenView().
+	PROCEDURE OpenWithParamsHelper(toE)
+		LOCAL lcT, loDb
+		lcT = toE.NewName()
+		toE.CreateCustomers(lcT)
+		toE.InsertCustomer(lcT, "Ana", "Madrid")
+		toE.InsertCustomer(lcT, "Luis", "Lima")
+		loDb = This.Connected(toE)
+		This.Check(loDb.Open(lcT, "c_frop", "city = :city", loDb.Params("city", "Madrid")), "Open() with Params() failed: " + TRANSFORM(loDb.cLastError))
+		IF USED("c_frop")
+			This.Check(RECCOUNT("c_frop") = 1 AND ALLTRIM(c_frop.name) == "Ana", "Open() with Params() has " + TRANSFORM(RECCOUNT("c_frop")) + " rows")
+			SELECT c_frop
+			REPLACE name WITH "Anna"
+			This.Check(loDb.Save("c_frop"), "Save() failed: " + TRANSFORM(loDb.cLastError))
+			This.Check(toE.RawCount(lcT, "name = 'Anna' AND city = 'Madrid'") = 1, "the server does not have Anna")
+		ENDIF
+		This.Check(loDb.OpenView("SELECT id, name FROM " + lcT + " WHERE city = :city", "c_frov", loDb.Params("city", "Lima")), ;
+			"OpenView() with Params() failed: " + TRANSFORM(loDb.cLastError))
+		IF USED("c_frov")
+			This.Check(RECCOUNT("c_frov") = 1 AND ALLTRIM(c_frov.name) == "Luis", "OpenView() with Params() has " + TRANSFORM(RECCOUNT("c_frov")) + " rows")
+		ENDIF
+		loDb.CloseAll()
+		loDb.Disconnect()
+		toE.DropTable(lcT)
+	ENDPROC
+
+	* An Empty with the pairs, written by hand as the object of parameters always was.
+	FUNCTION Values(tc1, tv1, tc2, tv2, tc3, tv3)
+		LOCAL loP, lnI
+		loP = CREATEOBJECT("Empty")
+		FOR lnI = 1 TO INT(PCOUNT() / 2)
+			ADDPROPERTY(loP, EVALUATE("tc" + TRANSFORM(lnI)), EVALUATE("tv" + TRANSFORM(lnI)))
+		ENDFOR
+		RETURN loP
+	ENDFUNC
+
+	PROCEDURE TestQueryWithAQuestionMarkVariableFails() HELP [Fact, Trait("Category", "Query"), Timeout(180000)]
+		This.OnEachEngine("QueryWithAQuestionMarkVariableFails")
+	ENDPROC
+
+	* A ?variable that is LOCAL of the caller fails with bad_argument and the call comes back: before
+	* the guard it opened VFP's "View Parameter" dialog, and foxproof would end the test on its time
+	* limit, naming the dialog. A PRIVATE of the caller is seen, as always, and gives its row.
+	PROCEDURE QueryWithAQuestionMarkVariableFails(toE)
+		LOCAL lcT, loDb, lcCity, llOk
+		PRIVATE pcCity
+		lcT = toE.NewName()
+		toE.CreateCustomers(lcT)
+		toE.InsertCustomer(lcT, "Ana", "Madrid")
+		toE.InsertCustomer(lcT, "Luis", "Lima")
+		loDb = This.Connected(toE)
+		lcCity = "Madrid"
+		pcCity = "Lima"
+		llOk = loDb.Query("SELECT name FROM " + lcT + " WHERE city = ?lcCity", "c_frq")
+		This.Check(!llOk, "Query() with ?lcCity (LOCAL) returned .T.")
+		This.Check(loDb.cLastErrorCode == "bad_argument", "?lcCity: cLastErrorCode = '" + loDb.cLastErrorCode + "', expected bad_argument")
+		This.Check("?lcCity" $ loDb.cLastError, "?lcCity: the message does not name it: " + loDb.cLastError)
+		This.Check(!USED("c_frq"), "?lcCity: Query() left the cursor c_frq")
+		IF USED("c_frq")
+			USE IN c_frq
+		ENDIF
+		llOk = loDb.Query("SELECT name FROM " + lcT + " WHERE city = ?pcCity", "c_frq")
+		This.Check(llOk, "Query() with ?pcCity (PRIVATE) failed: " + TRANSFORM(loDb.cLastError))
+		IF USED("c_frq")
+			This.Check(RECCOUNT("c_frq") = 1 AND ALLTRIM(c_frq.name) == "Luis", "?pcCity: Query() returned " + TRANSFORM(RECCOUNT("c_frq")) + " rows")
+			USE IN c_frq
+		ENDIF
+		loDb.Disconnect()
+		toE.DropTable(lcT)
+	ENDPROC
+
 	PROCEDURE TestScalarReturnsNumbers() HELP [Fact, Trait("Category", "Query"), Timeout(180000)]
 		This.OnEachEngine("ScalarReturnsNumbers")
 	ENDPROC
@@ -703,6 +919,376 @@ DEFINE CLASS TestRemoteIntegration AS Custom
 	ENDPROC
 
 	* ======================================================================== *
+	* Views (OpenView)
+	* ======================================================================== *
+	* The SELECT of an order with its customer's name, by :id.
+	FUNCTION OrderViewSql(tcOrders, tcCustomers)
+		RETURN "SELECT o.id, o.customer_id, o.status, c.name AS customer FROM " + tcOrders + " o JOIN " + tcCustomers + ;
+			" c ON c.id = o.customer_id WHERE o.id = :id"
+	ENDFUNC
+
+	PROCEDURE TestOpenViewWithoutATableIsReadOnly() HELP [Fact, Trait("Category", "View"), Timeout(180000)]
+		This.OnEachEngine("OpenViewWithoutATableIsReadOnly")
+	ENDPROC
+
+	* A join opens and reads; without a base table Save() refuses it, and a table without a key opens too.
+	PROCEDURE OpenViewWithoutATableIsReadOnly(toE)
+		LOCAL lcC, lcO, lcN, loDb, loP
+		lcC = toE.NewName()
+		lcO = toE.NewName()
+		lcN = toE.NewName()
+		toE.CreateCustomers(lcC)
+		toE.CreateOrders(lcO, lcC)
+		toE.RawRun("CREATE TABLE " + lcN + " (code VARCHAR(10), descr VARCHAR(40))")
+		toE.RawRun("INSERT INTO " + lcN + " (code, descr) VALUES ('A1', 'first')")
+		toE.InsertCustomer(lcC, "Ana", "Bonn")
+		toE.InsertOrder(lcO, toE.MaxId(lcC), "open")
+		loP = CREATEOBJECT("Empty")
+		ADDPROPERTY(loP, "id", toE.MaxId(lcO))
+		loDb = This.Connected(toE)
+		This.Check(loDb.OpenView(This.OrderViewSql(lcO, lcC), "c_frv", loP), "OpenView() of a join failed: " + TRANSFORM(loDb.cLastError))
+		IF USED("c_frv")
+			This.Check(ALIAS() == "C_FRV", "OpenView() did not select the cursor: " + ALIAS())
+			This.Check(RECCOUNT("c_frv") = 1 AND ALLTRIM(c_frv.customer) == "Ana" AND ALLTRIM(c_frv.status) == "open", ;
+				"the view did not read the order with its customer's name")
+			REPLACE status WITH "paid" IN c_frv
+			This.Check(!loDb.Save("c_frv"), "Save() of a view without a table returned .T.")
+			This.Check(loDb.cLastErrorCode == "read_only", "cLastErrorCode = '" + loDb.cLastErrorCode + "', expected read_only")
+			This.Check(toE.RawCount(lcO, "status = 'open'") = 1, "Save() of a read-only view changed the server")
+		ENDIF
+		This.Check(loDb.OpenView("SELECT code, descr FROM " + lcN, "c_frvn"), "OpenView() of a table without a primary key failed: " + TRANSFORM(loDb.cLastError))
+		This.Check(USED("c_frvn") AND RECCOUNT("c_frvn") = 1, "the view of a table without a primary key did not read its row")
+		loDb.CloseAll()
+		loDb.Disconnect()
+		toE.DropTable(lcO)
+		toE.DropTable(lcC)
+		toE.DropTable(lcN)
+	ENDPROC
+
+	PROCEDURE TestOpenViewRejectsANonSelect() HELP [Fact, Trait("Category", "View"), Timeout(180000)]
+		This.OnEachEngine("OpenViewRejectsANonSelect")
+	ENDPROC
+
+	* Only a SELECT is a view: anything else is refused before it reaches the server.
+	PROCEDURE OpenViewRejectsANonSelect(toE)
+		LOCAL lcT, loDb
+		lcT = toE.NewName()
+		toE.CreateCustomers(lcT)
+		toE.InsertCustomer(lcT, "one", "Graz")
+		toE.InsertCustomer(lcT, "two", "Graz")
+		loDb = This.Connected(toE)
+		This.Check(!loDb.OpenView("DELETE FROM " + lcT, "c_frvd"), "OpenView() of a DELETE returned .T.")
+		This.Check(loDb.cLastErrorCode == "bad_argument", "cLastErrorCode = '" + loDb.cLastErrorCode + "', expected bad_argument")
+		This.Check(!USED("c_frvd"), "OpenView() of a DELETE left a cursor open")
+		This.Check(toE.RawCount(lcT) = 2, "the DELETE of OpenView() reached the server")
+		This.Check(!loDb.OpenView("", "c_frvd") AND loDb.cLastErrorCode == "bad_argument", "OpenView() without a SELECT: '" + loDb.cLastErrorCode + "'")
+		loDb.CloseAll()
+		loDb.Disconnect()
+		toE.DropTable(lcT)
+	ENDPROC
+
+	PROCEDURE TestOpenViewRefreshKeepsTheParameters() HELP [Fact, Trait("Category", "View"), Timeout(180000)]
+		This.OnEachEngine("OpenViewRefreshKeepsTheParameters")
+	ENDPROC
+
+	* Another user changes the order; Refresh() reads it again with the same :id, and only that order.
+	PROCEDURE OpenViewRefreshKeepsTheParameters(toE)
+		LOCAL lcC, lcO, loDb, loP, lnId
+		lcC = toE.NewName()
+		lcO = toE.NewName()
+		toE.CreateCustomers(lcC)
+		toE.CreateOrders(lcO, lcC)
+		toE.InsertCustomer(lcC, "Ana", "Bonn")
+		toE.InsertOrder(lcO, toE.MaxId(lcC), "open")
+		lnId = toE.MaxId(lcO)
+		toE.InsertOrder(lcO, toE.MaxId(lcC), "open")
+		loP = CREATEOBJECT("Empty")
+		ADDPROPERTY(loP, "id", lnId)
+		loDb = This.Connected(toE)
+		This.Check(loDb.OpenView(This.OrderViewSql(lcO, lcC), "c_frvr", loP), "OpenView() failed: " + TRANSFORM(loDb.cLastError))
+		IF USED("c_frvr")
+			This.Check(toE.RawRun("UPDATE " + lcO + " SET status = 'paid' WHERE id = " + TRANSFORM(lnId)), "the raw UPDATE failed: " + toE.cLastError)
+			This.Check(loDb.Refresh("c_frvr"), "Refresh() failed: " + TRANSFORM(loDb.cLastError))
+			This.Check(USED("c_frvr") AND RECCOUNT("c_frvr") = 1, "after Refresh() the view has " + IIF(USED("c_frvr"), TRANSFORM(RECCOUNT("c_frvr")), "no") + " rows, expected 1")
+			This.Check(USED("c_frvr") AND c_frvr.id = lnId AND ALLTRIM(c_frvr.status) == "paid", "Refresh() did not bring the change of order " + TRANSFORM(lnId))
+		ENDIF
+		loDb.CloseAll()
+		loDb.Disconnect()
+		toE.DropTable(lcO)
+		toE.DropTable(lcC)
+	ENDPROC
+
+	* ---- updatable views (cTable) ------------------------------------------------------
+	* Customer "Ana" with one order "open": fills tcC and tcO, returns the order's :id parameter.
+	FUNCTION OneOrder(toE, tcC, tcO)
+		LOCAL loP
+		toE.CreateCustomers(tcC)
+		toE.CreateOrders(tcO, tcC)
+		toE.InsertCustomer(tcC, "Ana", "Bonn")
+		toE.InsertOrder(tcO, toE.MaxId(tcC), "open")
+		loP = CREATEOBJECT("Empty")
+		ADDPROPERTY(loP, "id", toE.MaxId(tcO))
+		RETURN loP
+	ENDFUNC
+
+	PROCEDURE TestOpenViewUpdatesOnlyTheBaseTable() HELP [Fact, Trait("Category", "View"), Timeout(180000)]
+		This.OnEachEngine("OpenViewUpdatesOnlyTheBaseTable")
+	ENDPROC
+
+	* A change to the order's status in the join reaches the orders table; the customers stay as they were.
+	PROCEDURE OpenViewUpdatesOnlyTheBaseTable(toE)
+		LOCAL lcC, lcO, loDb, loP
+		lcC = toE.NewName()
+		lcO = toE.NewName()
+		loP = This.OneOrder(toE, lcC, lcO)
+		loDb = This.Connected(toE)
+		This.Check(loDb.OpenView(This.OrderViewSql(lcO, lcC), "c_frvu", loP, lcO), "OpenView() with a table failed: " + TRANSFORM(loDb.cLastError))
+		IF USED("c_frvu")
+			REPLACE status WITH "paid" IN c_frvu
+			This.Check(loDb.Save("c_frvu"), "Save() of the view failed: " + TRANSFORM(loDb.cLastError))
+			This.Check(ALLTRIM(TRANSFORM(toE.RawScalar("SELECT status FROM " + lcO + " WHERE id = " + TRANSFORM(loP.id)))) == "paid", ;
+				"the server does not have the new status")
+			This.Check(toE.RawCount(lcC, "name = 'Ana'") = 1 AND toE.RawCount(lcC) = 1, "Save() of the view changed the customers")
+			This.Check(ALLTRIM(c_frvu.customer) == "Ana", "the joined column left the cursor or changed: " + TRANSFORM(c_frvu.customer))
+			This.Check(!loDb.HasChanges("c_frvu"), "after Save() the view has changes")
+		ENDIF
+		loDb.CloseAll()
+		loDb.Disconnect()
+		toE.DropTable(lcO)
+		toE.DropTable(lcC)
+	ENDPROC
+
+	PROCEDURE TestOpenViewInsertGetsTheId() HELP [Fact, Trait("Category", "View"), Timeout(180000)]
+		This.OnEachEngine("OpenViewInsertGetsTheId")
+	ENDPROC
+
+	* A row added to the view goes to the orders table, and its new id comes back to the cursor.
+	PROCEDURE OpenViewInsertGetsTheId(toE)
+		LOCAL lcC, lcO, loDb, loP, lnCustomer
+		lcC = toE.NewName()
+		lcO = toE.NewName()
+		loP = This.OneOrder(toE, lcC, lcO)
+		lnCustomer = toE.MaxId(lcC)
+		loDb = This.Connected(toE)
+		This.Check(loDb.OpenView(This.OrderViewSql(lcO, lcC), "c_frvi", loP, lcO), "OpenView() with a table failed: " + TRANSFORM(loDb.cLastError))
+		IF USED("c_frvi")
+			INSERT INTO c_frvi (customer_id, status) VALUES (lnCustomer, "new")
+			This.Check(loDb.Save("c_frvi"), "Save() of a new row of the view failed: " + TRANSFORM(loDb.cLastError))
+			This.Check(toE.RawCount(lcO, "status = 'new' AND customer_id = " + TRANSFORM(lnCustomer)) = 1, "the new row is not in the orders table")
+			SELECT c_frvi
+			LOCATE FOR ALLTRIM(status) == "new"
+			This.Check(FOUND() AND c_frvi.id = toE.MaxId(lcO), "the new id did not come back to the cursor: " + IIF(FOUND(), TRANSFORM(c_frvi.id), "no row"))
+			This.Check(toE.RawCount(lcC) = 1, "Save() of the view added a customer")
+		ENDIF
+		loDb.CloseAll()
+		loDb.Disconnect()
+		toE.DropTable(lcO)
+		toE.DropTable(lcC)
+	ENDPROC
+
+	PROCEDURE TestOpenViewDeletesTheRow() HELP [Fact, Trait("Category", "View"), Timeout(180000)]
+		This.OnEachEngine("OpenViewDeletesTheRow")
+	ENDPROC
+
+	* A row deleted in the view is deleted from the orders table, and its customer stays.
+	PROCEDURE OpenViewDeletesTheRow(toE)
+		LOCAL lcC, lcO, loDb, loP
+		lcC = toE.NewName()
+		lcO = toE.NewName()
+		loP = This.OneOrder(toE, lcC, lcO)
+		loDb = This.Connected(toE)
+		This.Check(loDb.OpenView(This.OrderViewSql(lcO, lcC), "c_frvx", loP, lcO), "OpenView() with a table failed: " + TRANSFORM(loDb.cLastError))
+		IF USED("c_frvx")
+			DELETE IN c_frvx
+			This.Check(loDb.Save("c_frvx"), "Save() of a deleted row of the view failed: " + TRANSFORM(loDb.cLastError))
+			This.Check(toE.RawCount(lcO, "id = " + TRANSFORM(loP.id)) = 0, "the order is still on the server")
+			This.Check(toE.RawCount(lcC, "name = 'Ana'") = 1, "the customer of the deleted order is gone")
+		ENDIF
+		loDb.CloseAll()
+		loDb.Disconnect()
+		toE.DropTable(lcO)
+		toE.DropTable(lcC)
+	ENDPROC
+
+	PROCEDURE TestOpenViewRefusesAKeyMissingFromTheSelect() HELP [Fact, Trait("Category", "View"), Timeout(180000)]
+		This.OnEachEngine("OpenViewRefusesAKeyMissingFromTheSelect")
+	ENDPROC
+
+	* Without the key in the SELECT Save() could not find the row: OpenView() refuses, and leaves
+	* neither a cursor nor a transaction behind.
+	PROCEDURE OpenViewRefusesAKeyMissingFromTheSelect(toE)
+		LOCAL lcC, lcO, loDb, loP, lcSql
+		lcC = toE.NewName()
+		lcO = toE.NewName()
+		loP = This.OneOrder(toE, lcC, lcO)
+		loDb = This.Connected(toE)
+		lcSql = "SELECT o.status, c.name AS customer FROM " + lcO + " o JOIN " + lcC + " c ON c.id = o.customer_id WHERE o.id = :id"
+		This.Check(!loDb.OpenView(lcSql, "c_frvk", loP, lcO), "OpenView() of a SELECT without the key returned .T.")
+		This.Check(loDb.cLastErrorCode == "no_primary_key", "cLastErrorCode = '" + loDb.cLastErrorCode + "', expected no_primary_key")
+		This.Check(" id " $ " " + LOWER(CHRTRAN(loDb.cLastError, ",:", "  ")) + " " AND "is not in the select" $ LOWER(loDb.cLastError), ;
+			"the message does not say that the key column is missing from the SELECT: " + loDb.cLastError)
+		This.Check(!USED("c_frvk"), "OpenView() left the cursor open")
+		This.Check(!loDb.lInTransaction, "OpenView() left a transaction open")
+		This.Check(loDb.OpenView(This.OrderViewSql(lcO, lcC), "c_frvk", loP, lcO), "the alias is not free after the refusal: " + TRANSFORM(loDb.cLastError))
+		loDb.CloseAll()
+		loDb.Disconnect()
+		toE.DropTable(lcO)
+		toE.DropTable(lcC)
+	ENDPROC
+
+	PROCEDURE TestOpenViewRefusesAnEditToAJoinedColumn() HELP [Fact, Trait("Category", "View"), Timeout(180000)]
+		This.OnEachEngine("OpenViewRefusesAnEditToAJoinedColumn")
+	ENDPROC
+
+	* The customer's name is not a column of orders: a change to it makes Save() fail with read_only
+	* before anything is sent, and the change stays in the buffer.
+	PROCEDURE OpenViewRefusesAnEditToAJoinedColumn(toE)
+		LOCAL lcC, lcO, loDb, loP
+		lcC = toE.NewName()
+		lcO = toE.NewName()
+		loP = This.OneOrder(toE, lcC, lcO)
+		loDb = This.Connected(toE)
+		This.Check(loDb.OpenView(This.OrderViewSql(lcO, lcC), "c_frvj", loP, lcO), "OpenView() with a table failed: " + TRANSFORM(loDb.cLastError))
+		IF USED("c_frvj")
+			REPLACE customer WITH "X" IN c_frvj
+			This.Check(!loDb.Save("c_frvj"), "Save() of a change to a joined column returned .T.")
+			This.Check(loDb.cLastErrorCode == "read_only", "cLastErrorCode = '" + loDb.cLastErrorCode + "', expected read_only")
+			This.Check("customer" $ LOWER(loDb.cLastError), "the message does not name the column: " + loDb.cLastError)
+			This.Check(loDb.HasChanges("c_frvj"), "the change left the buffer")
+			This.Check(!loDb.lInTransaction, "the failed Save() left a transaction open")
+			This.Check(toE.RawCount(lcC, "name = 'Ana'") = 1, "the customer's name changed on the server")
+			This.Check(loDb.Discard("c_frvj") AND !loDb.HasChanges("c_frvj"), "Discard() did not clear the change")
+			This.Check(loDb.Close("c_frvj") AND !USED("c_frvj"), "Close() after Discard() failed: " + loDb.cLastErrorCode)
+		ENDIF
+		* The same for a new row that fills the joined column: the INSERT is not sent either.
+		This.Check(loDb.OpenView(This.OrderViewSql(lcO, lcC), "c_frvj", loP, lcO), "OpenView() again failed: " + TRANSFORM(loDb.cLastError))
+		IF USED("c_frvj")
+			INSERT INTO c_frvj (customer_id, status, customer) VALUES (toE.MaxId(lcC), "new", "X")
+			This.Check(!loDb.Save("c_frvj"), "Save() of a new row with a joined column returned .T.")
+			This.Check(loDb.cLastErrorCode == "read_only", "new row: cLastErrorCode = '" + loDb.cLastErrorCode + "', expected read_only")
+			This.Check("customer" $ LOWER(loDb.cLastError), "new row: the message does not name the column: " + loDb.cLastError)
+			This.Check(toE.RawCount(lcO, "status = 'new'") = 0, "the new row reached the orders table")
+			This.Check(!loDb.lInTransaction, "the failed Save() of a new row left a transaction open")
+		ENDIF
+		loDb.CloseAll(.T.)
+		loDb.Disconnect()
+		toE.DropTable(lcO)
+		toE.DropTable(lcC)
+	ENDPROC
+
+	PROCEDURE TestOpenViewInAGroupSavesWithTheOthers() HELP [Fact, Trait("Category", "View"), Timeout(180000)]
+		This.OnEachEngine("OpenViewInAGroupSavesWithTheOthers")
+	ENDPROC
+
+	* A view and a cursor of Open() in one group: SaveGroup() sends both in one transaction, and when
+	* the view fails, the other cursor's change does not reach the server either.
+	PROCEDURE OpenViewInAGroupSavesWithTheOthers(toE)
+		LOCAL lcC, lcO, loDb, loP, llOk, llOpen
+		lcC = toE.NewName()
+		lcO = toE.NewName()
+		loP = This.OneOrder(toE, lcC, lcO)
+		loDb = This.Connected(toE)
+		This.Check(loDb.Open(lcC, "c_frg1", "", .NULL., "", .F., "g"), "Open() in the group failed: " + TRANSFORM(loDb.cLastError))
+		This.Check(loDb.OpenView(This.OrderViewSql(lcO, lcC), "c_frg2", loP, lcO, "", "g"), "OpenView() in the group failed: " + TRANSFORM(loDb.cLastError))
+		IF USED("c_frg1") AND USED("c_frg2")
+			REPLACE city WITH "Kiel" IN c_frg1
+			REPLACE status WITH "paid" IN c_frg2
+			This.Check(loDb.SaveGroup("g"), "SaveGroup() of a cursor and a view failed: " + TRANSFORM(loDb.cLastError))
+			This.Check(toE.RawCount(lcC, "city = 'Kiel'") = 1 AND toE.RawCount(lcO, "status = 'paid'") = 1, "SaveGroup() did not reach the server")
+		ENDIF
+		* The failing pair: the view's change is to the joined column.
+		This.Check(loDb.Open(lcC, "c_frg3", "", .NULL., "", .F., "g2"), "Open() in the second group failed: " + TRANSFORM(loDb.cLastError))
+		This.Check(loDb.OpenView(This.OrderViewSql(lcO, lcC), "c_frg4", loP, lcO, "", "g2"), "OpenView() in the second group failed: " + TRANSFORM(loDb.cLastError))
+		IF USED("c_frg3") AND USED("c_frg4")
+			REPLACE city WITH "Rome" IN c_frg3
+			REPLACE customer WITH "X" IN c_frg4
+			llOk = loDb.SaveGroup("g2")
+			llOpen = loDb.lInTransaction
+			IF llOpen
+				loDb.Rollback()
+			ENDIF
+			This.Check(!llOk AND loDb.cLastErrorCode == "read_only", "SaveGroup() with a change to a joined column: " + TRANSFORM(llOk) + " " + loDb.cLastErrorCode)
+			This.Check(!llOpen, "the failed SaveGroup() left its transaction open")
+			This.Check(toE.RawCount(lcC, "city = 'Rome'") = 0, "the other cursor's change reached the server")
+			This.Check(loDb.HasChanges("c_frg3") AND loDb.HasChanges("c_frg4"), "a cursor of the group lost its changes")
+		ENDIF
+		loDb.CloseAll(.T.)
+		loDb.Disconnect()
+		toE.DropTable(lcO)
+		toE.DropTable(lcC)
+	ENDPROC
+
+	PROCEDURE TestOpenViewDetectsAConflict() HELP [Fact, Trait("Category", "View"), Timeout(180000)]
+		This.OnEachEngine("OpenViewDetectsAConflict")
+	ENDPROC
+
+	* With lDetectConflicts, another user's change to the column the view changes is a conflict; a
+	* change to the joined table, or to a column of the base table the view did not change, is not.
+	PROCEDURE OpenViewDetectsAConflict(toE)
+		LOCAL lcC, lcO, loDb, loP, llOk, lnOther
+		lcC = toE.NewName()
+		lcO = toE.NewName()
+		loP = This.OneOrder(toE, lcC, lcO)
+		toE.InsertCustomer(lcC, "Bea", "Graz")
+		lnOther = toE.MaxId(lcC)
+		loDb = This.Connected(toE)
+		loDb.lDetectConflicts = .T.
+		This.Check(loDb.OpenView(This.OrderViewSql(lcO, lcC), "c_frvc", loP, lcO), "OpenView() with a table failed: " + TRANSFORM(loDb.cLastError))
+		IF USED("c_frvc")
+			toE.RawRun("UPDATE " + lcO + " SET status = 'cancelled' WHERE id = " + TRANSFORM(loP.id))
+			REPLACE status WITH "paid" IN c_frvc
+			llOk = loDb.Save("c_frvc")
+			This.Check(!llOk AND loDb.cLastErrorCode == "row_changed", "Save() over another user's change: " + TRANSFORM(llOk) + " " + loDb.cLastErrorCode + " " + TRANSFORM(loDb.cLastError))
+			This.Check(toE.RawCount(lcO, "status = 'cancelled'") = 1, "the other user's change was overwritten")
+			This.Check(!loDb.lInTransaction, "Save() left a transaction open")
+			This.Check(loDb.Discard("c_frvc") AND loDb.Refresh("c_frvc"), "Discard() and Refresh() failed: " + TRANSFORM(loDb.cLastError))
+			This.Check(ALLTRIM(c_frvc.status) == "cancelled", "Refresh() did not bring the other user's status")
+			REPLACE status WITH "paid" IN c_frvc
+			toE.RawRun("UPDATE " + lcC + " SET name = 'Zoe' WHERE name = 'Ana'")
+			toE.RawRun("UPDATE " + lcO + " SET customer_id = " + TRANSFORM(lnOther) + " WHERE id = " + TRANSFORM(loP.id))
+			llOk = loDb.Save("c_frvc")
+			This.Check(llOk, "Save() saw a conflict that is not one: " + loDb.cLastErrorCode + " " + TRANSFORM(loDb.cLastError))
+			This.Check(toE.RawCount(lcO, "status = 'paid' AND customer_id = " + TRANSFORM(lnOther)) = 1, "the server row is not the merge of both changes")
+		ENDIF
+		loDb.CloseAll(.T.)
+		loDb.Disconnect()
+		toE.DropTable(lcO)
+		toE.DropTable(lcC)
+	ENDPROC
+
+	PROCEDURE TestOpenViewRefusesASelectWithoutAResultSet() HELP [Fact, Trait("Category", "View"), Timeout(180000)]
+		* SQLite and Firebird have no SELECT that returns nothing: SELECT ... INTO is not SQL there.
+		This.OnEachEngine("OpenViewRefusesASelectWithoutAResultSet", "mssql,postgresql,mysql,mariadb")
+	ENDPROC
+
+	* A SELECT that leaves no cursor (it writes into a table or a variable) is refused with
+	* bad_argument instead of raising a VFP error.
+	PROCEDURE OpenViewRefusesASelectWithoutAResultSet(toE)
+		LOCAL lcT, lcNew, loDb, lcSql
+		lcT = toE.NewName()
+		lcNew = toE.NewName()
+		toE.CreateCustomers(lcT)
+		toE.InsertCustomer(lcT, "one", "Graz")
+		IF INLIST(toE.cName, "mysql", "mariadb")
+			lcSql = "SELECT 1 INTO @fr_v"
+		ELSE
+			lcSql = "SELECT * INTO " + lcNew + " FROM " + lcT
+		ENDIF
+		loDb = This.Connected(toE)
+		This.Check(!loDb.OpenView(lcSql, "c_frvn"), "OpenView() of " + lcSql + " returned .T.")
+		This.Check(loDb.cLastErrorCode == "bad_argument", "cLastErrorCode = '" + loDb.cLastErrorCode + "', expected bad_argument: " + loDb.cLastError)
+		This.Check(!USED("c_frvn"), "OpenView() of a SELECT without a result set left a cursor")
+		This.Check(loDb.OpenView("SELECT name FROM " + lcT + " WHERE 1 = 0", "c_frvn") AND USED("c_frvn") AND RECCOUNT("c_frvn") = 0, ;
+			"a SELECT with no rows is not a view: " + loDb.cLastError)
+		loDb.CloseAll()
+		loDb.Disconnect()
+		IF !INLIST(toE.cName, "mysql", "mariadb")
+			toE.DropTable(lcNew)
+		ENDIF
+		toE.DropTable(lcT)
+	ENDPROC
+
+	* ======================================================================== *
 	* Text, types and dates
 	* ======================================================================== *
 	PROCEDURE TestAccentedTextRoundTrip() HELP [Fact, Trait("Category", "Types"), Timeout(180000)]
@@ -887,6 +1473,77 @@ DEFINE CLASS TestRemoteIntegration AS Custom
 		loDb.Disconnect()
 		toE.DropTable(lcT1)
 		toE.DropTable(lcT2)
+	ENDPROC
+
+	PROCEDURE TestGetDatabasesListsTheConnectedOne() HELP [Fact, Trait("Category", "Metadata"), Timeout(180000)]
+		This.OnEachEngine("GetDatabasesListsTheConnectedOne")
+	ENDPROC
+
+	* The databases the login can open, one row each (name). On a file engine (SQLite, Firebird)
+	* the database is the file: one row, the one connected.
+	PROCEDURE GetDatabasesListsTheConnectedOne(toE)
+		LOCAL loDb, lcMine, lnFound, lnRows
+		loDb = This.Connected(toE)
+		lcMine = LOWER(ALLTRIM(loDb.cDatabase))
+		This.Check(loDb.GetDatabases("c_frdb"), "GetDatabases() failed: " + TRANSFORM(loDb.cLastError))
+		IF USED("c_frdb")
+			SELECT c_frdb
+			lnRows = RECCOUNT()
+			This.Check(FIELD(1) == "NAME" AND TYPE("name") == "C" AND FSIZE("name") = 128, "GetDatabases() cursor is not name C(128)")
+			COUNT FOR LOWER(ALLTRIM(name)) == lcMine TO lnFound
+			This.Check(lnFound = 1, "GetDatabases() lists the connected database " + TRANSFORM(lnFound) + " times, expected 1")
+			IF toE.IsServer()
+				This.Check(lnRows >= 2, "GetDatabases() lists " + TRANSFORM(lnRows) + " databases on a server, expected the test one and a system one")
+				COUNT FOR LOWER(ALLTRIM(name)) == LOWER(toE.MaintenanceDatabase()) TO lnFound
+				This.Check(lnFound = 1, "GetDatabases() does not list " + toE.MaintenanceDatabase())
+			ELSE
+				This.Check(lnRows = 1, "GetDatabases() lists " + TRANSFORM(lnRows) + " rows on a file engine, expected 1")
+			ENDIF
+			USE IN c_frdb
+		ENDIF
+		loDb.Disconnect()
+	ENDPROC
+
+	PROCEDURE TestGetObjectsListsTablesAndViews() HELP [Fact, Trait("Category", "Metadata"), Timeout(180000)]
+		This.OnEachEngine("GetObjectsListsTablesAndViews")
+	ENDPROC
+
+	* A table and a view made outside the library: GetObjects() has both with their type, and
+	* GetTables() keeps giving only the table (code counts on that).
+	PROCEDURE GetObjectsListsTablesAndViews(toE)
+		LOCAL lcT, lcV, loDb, lnFound, lcType
+		lcT = toE.NewName()
+		lcV = toE.NewName("frv")
+		toE.CreateCustomers(lcT)
+		This.Check(toE.RawRun("CREATE VIEW " + lcV + " AS SELECT id, name FROM " + lcT), "CREATE VIEW failed: " + toE.cLastError)
+		loDb = This.Connected(toE)
+		This.Check(loDb.GetObjects("c_fro"), "GetObjects() failed: " + TRANSFORM(loDb.cLastError))
+		IF USED("c_fro")
+			SELECT c_fro
+			This.Check(FIELD(1) == "NAME" AND TYPE("name") == "C" AND FSIZE("name") = 128 AND FIELD(2) == "TYPE" AND TYPE("type") == "C" AND FSIZE("type") = 5, ;
+				"GetObjects() cursor is not name C(128), type C(5)")
+			LOCATE FOR LOWER(ALLTRIM(name)) == lcT
+			lcType = IIF(FOUND(), ALLTRIM(type), "<missing>")
+			This.Check(lcType == "table", "GetObjects() has the table " + lcT + " as '" + lcType + "', expected 'table'")
+			LOCATE FOR LOWER(ALLTRIM(name)) == lcV
+			lcType = IIF(FOUND(), ALLTRIM(type), "<missing>")
+			This.Check(lcType == "view", "GetObjects() has the view " + lcV + " as '" + lcType + "', expected 'view'")
+			COUNT FOR !INLIST(ALLTRIM(type), "table", "view") TO lnFound
+			This.Check(lnFound = 0, "GetObjects() has " + TRANSFORM(lnFound) + " rows whose type is neither table nor view")
+			USE IN c_fro
+		ENDIF
+		This.Check(loDb.GetTables("c_frt"), "GetTables() failed: " + TRANSFORM(loDb.cLastError))
+		IF USED("c_frt")
+			SELECT c_frt
+			COUNT FOR LOWER(ALLTRIM(name)) == lcV TO lnFound
+			This.Check(lnFound = 0, "GetTables() lists the view " + lcV + ": it must keep giving only tables")
+			COUNT FOR LOWER(ALLTRIM(name)) == lcT TO lnFound
+			This.Check(lnFound = 1, "GetTables() does not list the table " + lcT)
+			USE IN c_frt
+		ENDIF
+		loDb.Disconnect()
+		toE.RawRun("DROP VIEW " + lcV)
+		toE.DropTable(lcT)
 	ENDPROC
 
 	PROCEDURE TestGetColumnsReturnsACursor() HELP [Fact, Trait("Category", "Metadata"), Timeout(180000)]

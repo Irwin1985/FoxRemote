@@ -1,0 +1,536 @@
+Integration: FoxRemote 1.2.0 against SQLite 3.43, SQL Server 2025 Express (ODBC Driver 17.10), MariaDB 11.8, MySQL 8.4 (MariaDB Connector/ODBC 3.2), PostgreSQL 18, Firebird 5.0.4 (04-11-2026)
+foxproof run --prg tests\FoxRemoteIntegrationTests.prg
+
+  TestRemoteIntegration
+    ok    TestConnectDoesNotCreateAMissingDatabase  812ms
+    ok    TestCreateDatabaseThenConnect  2329ms
+    ok    TestConnectLandsInTheRequestedDatabase  859ms
+    ok    TestConnectWithASemicolonInThePassword  296ms
+    ok    TestConnectWithWindowsAuthentication  141ms
+    ok    TestConnectDoesNotChangeGlobalSettings  312ms
+    ok    TestConnectFailureIsReportedWithoutADialog  344ms
+    ok    TestErrorsAreCountedWithCodeAndStatement  312ms
+    ok    TestStrictModeThrows  297ms
+    ok    TestQueryWithNamedParametersFromLocals  1422ms
+    ok    TestQueryWithACustomBasedParamsObject  1125ms
+    ok    TestQueryWithAMissingParameterFails  1328ms
+    ok    TestQueryWithParameterPairs  1031ms
+    ok    TestExecuteAndScalarWithPairs  1609ms
+    ok    TestOpenWithParamsHelper  1500ms
+    ok    TestQueryWithAQuestionMarkVariableFails  1422ms
+    ok    TestScalarReturnsNumbers  1031ms
+    ok    TestExecuteReturnsAffectedRows  1328ms
+    ok    TestTransactionCommitPersists  969ms
+    ok    TestTransactionRollbackUndoes  1156ms
+    ok    TestDisconnectWithAnOpenTransactionRollsBack  1141ms
+    ok    TestSaveInsertIsCommittedAndReturnsTheId  1547ms
+    ok    TestSaveInsertIntoATableWithATrigger  922ms
+    ok    TestSaveUpdatesOnlyTheChangedColumns  2234ms
+    ok    TestSaveOfAValueWrittenAgainSucceeds  1156ms
+    ok    TestSaveDeletesTheRow  1750ms
+    ok    TestSaveFailureReturnsFalseAndKeepsTheEdits  1188ms
+    ok    TestSaveOfAnUnknownAliasLeavesNoTransactionOpen  1046ms
+    ok    TestSaveOfAReadOnlyCursorKeepsTheSettings  875ms
+    ok    TestSaveGroupSendsEveryCursor  2500ms
+    ok    TestOpenForWritingWithoutAPrimaryKeyIsRefused  906ms
+    ok    TestCloseGroupThenReopenTheSameAlias  953ms
+    ok    TestRefreshReloadsAReadOnlyCursor  1266ms
+    ok    TestRefreshRefusesWithPendingChanges  1094ms
+    ok    TestCloseAllLeavesTheUsersCursorsOpen  969ms
+    ok    TestOpenViewWithoutATableIsReadOnly  3219ms
+    ok    TestOpenViewRejectsANonSelect  1844ms
+    ok    TestOpenViewRefreshKeepsTheParameters  2937ms
+    ok    TestOpenViewUpdatesOnlyTheBaseTable  2938ms
+    ok    TestOpenViewInsertGetsTheId  3203ms
+    ok    TestOpenViewDeletesTheRow  2672ms
+    ok    TestOpenViewRefusesAKeyMissingFromTheSelect  2391ms
+    ok    TestOpenViewRefusesAnEditToAJoinedColumn  2828ms
+    ok    TestOpenViewInAGroupSavesWithTheOthers  2922ms
+    ok    TestOpenViewDetectsAConflict  3812ms
+    ok    TestOpenViewRefusesASelectWithoutAResultSet  1125ms
+    ok    TestAccentedTextRoundTrip  1422ms
+    ok    TestAccentedTextInTheSqlRoundTrip  890ms
+    ok    TestSaveDoesNotPadVarchar  1109ms
+    ok    TestLongTextRoundTrip  1063ms
+    ok    TestEmptyDateIsStoredAsNull  1312ms
+    ok    TestServerTextIsNotUcs2  297ms
+    ok    TestGetPrimaryKey  953ms
+    ok    TestGetTablesReturnsACursor  1469ms
+    ok    TestGetDatabasesListsTheConnectedOne  359ms
+    ok    TestGetObjectsListsTablesAndViews  1390ms
+    ok    TestGetColumnsReturnsACursor  1000ms
+    ok    TestGetColumnsKeepsTheServersNames  859ms
+    ok    TestLastIdAfterExecute  1375ms
+    ok    TestMigrateRefusesAnExistingTable  1265ms
+    ok    TestMigrateReplaceCopiesRowsWithUsableNames  1297ms
+    ok    TestMigrateOfAFolderKeepsTheDefaultDirectory  641ms
+    ok    TestCreateTableFromCursorKeepsCharacterColumns  609ms
+    ok    TestCreateTableWithIndexAndForeignKey  2859ms
+    ok    TestQueryAfterTheServerDroppedTheConnection  7406ms
+    ok    TestWriteAfterAnIdleConnectionWasDropped  7516ms
+    ok    TestWriteWhenTheConnectionDropsIsNotRepeated  7281ms
+    ok    TestConnectionLostInsideATransaction  1594ms
+    ok    TestConnectionLostWithoutAutoReconnect  6781ms
+    ok    TestSaveDetectsAConflict  1484ms
+    ok    TestConflictDetectionAllowsOtherChanges  1453ms
+    ok    TestNextNumberCountsUp  2063ms
+    ok    TestNextNumberHoldsTheRowUntilCommit  13390ms
+    ok    TestHasChangesAndCloseWithChanges  1328ms
+    ok    TestStrictSaveFailureLeavesNoTransactionOpen  1125ms
+    ok    TestLibraryHasNoUserInterface  63ms
+
+  76 passed, 0 failed, 0 skipped  (140714ms)
+
+Without a server: foxproof run --prg tests\FoxRemoteTests.prg
+
+  TestRemoteSql
+    ok    TestTypesSqlServer  47ms
+    ok    TestTypesMySql  47ms
+    ok    TestTypesMariaDb  47ms
+    ok    TestTypesPostgreSql  46ms
+    ok    TestTypesFirebird  47ms
+    ok    TestTypesSqlite  62ms
+    ok    TestTypeOfAZeroWidthCharacterIsOne  63ms
+    ok    TestNumericPrecisionIsCappedAt38  46ms
+    ok    TestNamesAreLowerCaseInPostgreSqlMySqlAndSqlite  47ms
+    ok    TestNamesAreUpperCaseInFirebird  47ms
+    ok    TestNamesAreKeptInSqlServer  47ms
+    ok    TestPublicMethodsAreTheDocumentedOnes  47ms
+    ok    TestNamesFromVfpAreLowerCaseInSqlServer  63ms
+    ok    TestPrimaryKeyQueriesUseThePlainName  63ms
+    ok    TestPrimaryKeyQueryEscapesQuotes  47ms
+    ok    TestCreateTableColumnsAreNullableByDefault  62ms
+    ok    TestCreateTableNotNullAndDefault  47ms
+    ok    TestCreateTableCompositePrimaryKey  62ms
+    ok    TestCreateTableAutoIncrementColumn  47ms
+    ok    TestCreateTableHasNoAutomaticKeyByDefault  31ms
+    ok    TestCreateTableWithAutoKeyName  62ms
+    ok    TestCreateTableNamesAreUpperCaseInFirebird  47ms
+    ok    TestCreateTableNeverQuotesNames  47ms
+    ok    TestForeignKeyWithActions  47ms
+    ok    TestForeignKeyActionShortcuts  47ms
+    ok    TestForeignKeyRestrictIsNoActionInSqlServer  47ms
+    ok    TestForeignKeyWithoutActions  31ms
+    ok    TestCompositeForeignKey  47ms
+    ok    TestIndexesFollowTheTable  47ms
+    ok    TestConnectionStringSqlServer  47ms
+    ok    TestConnectionStringSqlServerPortGoesAfterAComma  46ms
+    ok    TestConnectionStringSqlServerWindowsAuthentication  31ms
+    ok    TestConnectionValueWithASemicolonIsBraced  47ms
+    ok    TestConnectionValueWithABraceIsDoubled  47ms
+    ok    TestConnectionValueWithEqualsOrBlanksIsBraced  47ms
+    ok    TestConnectionStringPortHasNoDecimals  47ms
+    ok    TestConnectionStringPostgreSqlDefaults  47ms
+    ok    TestConnectionStringMySqlWithoutPort  47ms
+    ok    TestConnectionStringFirebird  47ms
+    ok    TestConnectionStringSqlite  47ms
+    ok    TestConnectionStringSqlitePathWithASemicolonIsAnUri  47ms
+    ok    TestConnectionOptionsAreAppended  47ms
+    ok    TestFirebirdLocalPathForTheExistenceCheck  47ms
+    ok    TestParameterIsTranslated  62ms
+    ok    TestSeveralParameters  47ms
+    ok    TestParameterInsideQuotesIsLeftAlone  47ms
+    ok    TestPostgreSqlCastIsLeftAlone  47ms
+    ok    TestColonBeforeADigitIsNotAParameter  63ms
+    ok    TestSqlWithoutParametersIsUnchanged  62ms
+    ok    TestSqliteParametersGoAsUtf8  63ms
+    ok    TestOtherEnginesParametersAreNotConverted  46ms
+    ok    TestInsertSqlServerReadsScopeIdentity  47ms
+    ok    TestInsertReturningEngines  62ms
+    ok    TestMySqlDoesNotReturn  47ms
+    ok    TestInsertWithoutColumnsUsesDefaultValues  62ms
+    ok    TestTextIsTrimmedOnSave  47ms
+    ok    TestEmptyDateIsNullWhenNullable  47ms
+    ok    TestEmptyDateIsTheMinimumWhenNotNullable  63ms
+    ok    TestEmptyDateModeMin  62ms
+    ok    TestValuesThatTravelAsTheyAre  63ms
+    ok    TestBigIntTextBecomesANumber  63ms
+    ok    TestOtherTextStaysText  62ms
+    ok    TestMinimumDates  63ms
+    ok    TestDefaults  47ms
+    ok    TestExecuteWithoutAConnection  47ms
+    ok    TestStrictRaisesWithoutAConnection  47ms
+    ok    TestClearErrors  47ms
+    ok    TestSaveOfAnAliasNotOpenedByFoxRemote  47ms
+    ok    TestTransactionsNeedAConnection  47ms
+    ok    TestSqliteConnectToAMissingFile  62ms
+    ok    TestAttachNeedsAHandle  31ms
+    ok    TestMigrateOfNothing  62ms
+    ok    TestOpenNeedsATable  47ms
+    ok    TestParamsKeepsTheSevenTypes  47ms
+    ok    TestParamsWithAnOddCountFails  47ms
+    ok    TestParamsWithABadNameFails  47ms
+    ok    TestParamsWithANameTwiceFails  47ms
+    ok    TestParamsWithAnArrayFails  47ms
+    ok    TestParamsOfAnObjectThenMoreFails  62ms
+    ok    TestMalformedPairsFailBeforeTheServer  47ms
+    ok    TestAQuestionMarkVariableFails  62ms
+    ok    TestNoPrimaryKeySaysTheWayOut  47ms
+    ok    TestGenerateScriptOfADbf  78ms
+    ok    TestGenerateScriptOfAFolder  62ms
+    ok    TestGenerateScriptLeavesTheDefaultFolder  63ms
+
+  85 passed, 0 failed, 0 skipped  (4343ms)
+
+Red before the method existed (the eleven View tests against 1.1.0, every engine): error 1734, Property OPENVIEW is not found.
+    FAIL  TestOpenViewWithoutATableIsReadOnly  2437ms
+          [sqlite] raised 1734 Property OPENVIEW is not found. (openviewwithoutatableisreadonly, line 733)
+[mssql] raised 1734 Property OPENVIEW is not found. (openviewwithoutatableisreadonly, line 733)
+[mariadb] raised 1734 Property OPENVIEW is not found. (openviewwithoutatableisreadonly, line 733)
+[mysql] raised 1734 Property OPENVIEW is not found. (openviewwithoutatableisreadonly, line 733)
+[postgresql] raised 1734 Property OPENVIEW is not found. (openviewwithoutatableisreadonly, line 733)
+[firebird] raised 1734 Property OPENVIEW is not found. (openviewwithoutatableisreadonly, line 733)
+
+    FAIL  TestOpenViewRejectsANonSelect  1016ms
+          [sqlite] raised 1734 Property OPENVIEW is not found. (openviewrejectsanonselect, line 764)
+[mssql] raised 1734 Property OPENVIEW is not found. (openviewrejectsanonselect, line 764)
+[mariadb] raised 1734 Property OPENVIEW is not found. (openviewrejectsanonselect, line 764)
+[mysql] raised 1734 Property OPENVIEW is not found. (openviewrejectsanonselect, line 764)
+[postgresql] raised 1734 Property OPENVIEW is not found. (openviewrejectsanonselect, line 764)
+[firebird] raised 1734 Property OPENVIEW is not found. (openviewrejectsanonselect, line 764)
+
+    FAIL  TestOpenViewRefreshKeepsTheParameters  2141ms
+          [sqlite] raised 1734 Property OPENVIEW is not found. (openviewrefreshkeepstheparameters, line 792)
+[mssql] raised 1734 Property OPENVIEW is not found. (openviewrefreshkeepstheparameters, line 792)
+[mariadb] raised 1734 Property OPENVIEW is not found. (openviewrefreshkeepstheparameters, line 792)
+[mysql] raised 1734 Property OPENVIEW is not found. (openviewrefreshkeepstheparameters, line 792)
+[postgresql] raised 1734 Property OPENVIEW is not found. (openviewrefreshkeepstheparameters, line 792)
+[firebird] raised 1734 Property OPENVIEW is not found. (openviewrefreshkeepstheparameters, line 792)
+
+    FAIL  TestOpenViewUpdatesOnlyTheBaseTable  1734ms
+          [sqlite] raised 1734 Property OPENVIEW is not found. (openviewupdatesonlythebasetable, line 829)
+[mssql] raised 1734 Property OPENVIEW is not found. (openviewupdatesonlythebasetable, line 829)
+[mariadb] raised 1734 Property OPENVIEW is not found. (openviewupdatesonlythebasetable, line 829)
+[mysql] raised 1734 Property OPENVIEW is not found. (openviewupdatesonlythebasetable, line 829)
+[postgresql] raised 1734 Property OPENVIEW is not found. (openviewupdatesonlythebasetable, line 829)
+[firebird] raised 1734 Property OPENVIEW is not found. (openviewupdatesonlythebasetable, line 829)
+
+    FAIL  TestOpenViewInsertGetsTheId  2016ms
+          [sqlite] raised 1734 Property OPENVIEW is not found. (openviewinsertgetstheid, line 857)
+[mssql] raised 1734 Property OPENVIEW is not found. (openviewinsertgetstheid, line 857)
+[mariadb] raised 1734 Property OPENVIEW is not found. (openviewinsertgetstheid, line 857)
+[mysql] raised 1734 Property OPENVIEW is not found. (openviewinsertgetstheid, line 857)
+[postgresql] raised 1734 Property OPENVIEW is not found. (openviewinsertgetstheid, line 857)
+[firebird] raised 1734 Property OPENVIEW is not found. (openviewinsertgetstheid, line 857)
+
+    FAIL  TestOpenViewDeletesTheRow  1750ms
+          [sqlite] raised 1734 Property OPENVIEW is not found. (openviewdeletestherow, line 884)
+[mssql] raised 1734 Property OPENVIEW is not found. (openviewdeletestherow, line 884)
+[mariadb] raised 1734 Property OPENVIEW is not found. (openviewdeletestherow, line 884)
+[mysql] raised 1734 Property OPENVIEW is not found. (openviewdeletestherow, line 884)
+[postgresql] raised 1734 Property OPENVIEW is not found. (openviewdeletestherow, line 884)
+[firebird] raised 1734 Property OPENVIEW is not found. (openviewdeletestherow, line 884)
+
+    FAIL  TestOpenViewRefusesAKeyMissingFromTheSelect  2047ms
+          [sqlite] raised 1734 Property OPENVIEW is not found. (openviewrefusesakeymissingfromtheselect, line 910)
+[mssql] raised 1734 Property OPENVIEW is not found. (openviewrefusesakeymissingfromtheselect, line 910)
+[mariadb] raised 1734 Property OPENVIEW is not found. (openviewrefusesakeymissingfromtheselect, line 910)
+[mysql] raised 1734 Property OPENVIEW is not found. (openviewrefusesakeymissingfromtheselect, line 910)
+[postgresql] raised 1734 Property OPENVIEW is not found. (openviewrefusesakeymissingfromtheselect, line 910)
+[firebird] raised 1734 Property OPENVIEW is not found. (openviewrefusesakeymissingfromtheselect, line 910)
+
+    FAIL  TestOpenViewRefusesAnEditToAJoinedColumn  1687ms
+          [sqlite] raised 1734 Property OPENVIEW is not found. (openviewrefusesanedittoajoinedcolumn, line 935)
+[mssql] raised 1734 Property OPENVIEW is not found. (openviewrefusesanedittoajoinedcolumn, line 935)
+[mariadb] raised 1734 Property OPENVIEW is not found. (openviewrefusesanedittoajoinedcolumn, line 935)
+[mysql] raised 1734 Property OPENVIEW is not found. (openviewrefusesanedittoajoinedcolumn, line 935)
+[postgresql] raised 1734 Property OPENVIEW is not found. (openviewrefusesanedittoajoinedcolumn, line 935)
+[firebird] raised 1734 Property OPENVIEW is not found. (openviewrefusesanedittoajoinedcolumn, line 935)
+
+    FAIL  TestOpenViewInAGroupSavesWithTheOthers  2094ms
+          [sqlite] raised 1734 Property OPENVIEW is not found. (openviewinagroupsaveswiththeothers, line 976)
+[mssql] raised 1734 Property OPENVIEW is not found. (openviewinagroupsaveswiththeothers, line 976)
+[mariadb] raised 1734 Property OPENVIEW is not found. (openviewinagroupsaveswiththeothers, line 976)
+[mysql] raised 1734 Property OPENVIEW is not found. (openviewinagroupsaveswiththeothers, line 976)
+[postgresql] raised 1734 Property OPENVIEW is not found. (openviewinagroupsaveswiththeothers, line 976)
+[firebird] raised 1734 Property OPENVIEW is not found. (openviewinagroupsaveswiththeothers, line 976)
+
+    FAIL  TestOpenViewDetectsAConflict  2296ms
+          [sqlite] raised 1734 Property OPENVIEW is not found. (openviewdetectsaconflict, line 1020)
+[mssql] raised 1734 Property OPENVIEW is not found. (openviewdetectsaconflict, line 1020)
+[mariadb] raised 1734 Property OPENVIEW is not found. (openviewdetectsaconflict, line 1020)
+[mysql] raised 1734 Property OPENVIEW is not found. (openviewdetectsaconflict, line 1020)
+[postgresql] raised 1734 Property OPENVIEW is not found. (openviewdetectsaconflict, line 1020)
+[firebird] raised 1734 Property OPENVIEW is not found. (openviewdetectsaconflict, line 1020)
+
+    FAIL  TestOpenViewRefusesASelectWithoutAResultSet  625ms
+          [mssql] raised 1734 Property OPENVIEW is not found. (openviewrefusesaselectwithoutaresultset, line 1062)
+[mariadb] raised 1734 Property OPENVIEW is not found. (openviewrefusesaselectwithoutaresultset, line 1062)
+[mysql] raised 1734 Property OPENVIEW is not found. (openviewrefusesaselectwithoutaresultset, line 1062)
+[postgresql] raised 1734 Property OPENVIEW is not found. (openviewrefusesaselectwithoutaresultset, line 1062)
+
+
+  0 passed, 11 failed, 0 skipped  (19843ms)
+
+The View tests against the foxremote.prg of P2 (1c4c1fc): 11 of 11 pass. P3 only changes cVersion in the library, so the red of its two new tests and of the extended one is the three mutants below, every engine.
+
+M6, SendInsert() without the IF !IsUpdatable() (a new row that fills a column of the join):
+    FAIL  TestOpenViewRefusesAnEditToAJoinedColumn  2937ms
+          [sqlite] new row: cLastErrorCode = 'save_failed', expected read_only
+[mssql] new row: cLastErrorCode = 'save_failed', expected read_only
+[mariadb] new row: cLastErrorCode = 'save_failed', expected read_only
+[mysql] new row: cLastErrorCode = 'save_failed', expected read_only
+[postgresql] new row: cLastErrorCode = 'save_failed', expected read_only
+[firebird] new row: cLastErrorCode = 'save_failed', expected read_only
+
+    ok    TestOpenViewInAGroupSavesWithTheOthers  3016ms
+    ok    TestOpenViewDetectsAConflict  3688ms
+    ok    TestOpenViewRefusesASelectWithoutAResultSet  1110ms
+
+  10 passed, 1 failed, 0 skipped  (29971ms)
+
+M7, FinishSave() without its RollbackQuietly() (the failed Save() and SaveGroup() leave the transaction open, and OpenViewDetectsAConflict, which runs after them, reaches its time limit):
+    FAIL  TestOpenViewRefusesAnEditToAJoinedColumn  2828ms
+          [sqlite] the failed Save() left a transaction open
+[sqlite] the failed Save() of a new row left a transaction open
+[mssql] the failed Save() left a transaction open
+[mssql] the failed Save() of a new row left a transaction open
+[mariadb] the failed Save() left a transaction open
+[mariadb] the failed Save() of a new row left a transaction open
+[mysql] the failed Save() left a transaction open
+[mysql] the failed Save() of a new row left a transaction open
+[postgresql] the failed Save() left a transaction open
+[postgresql] the failed Save() of a new row left a transaction open
+[firebird] the failed Save() left a transaction open
+[firebird] the failed Save() of a new row left a transaction open
+
+    FAIL  TestOpenViewInAGroupSavesWithTheOthers  2953ms
+          [sqlite] the failed SaveGroup() left its transaction open
+[mssql] the failed SaveGroup() left its transaction open
+[mariadb] the failed SaveGroup() left its transaction open
+[mysql] the failed SaveGroup() left its transaction open
+[postgresql] the failed SaveGroup() left its transaction open
+[firebird] the failed SaveGroup() left its transaction open
+
+    ERROR TestOpenViewDetectsAConflict  180000ms
+          Infrastructure error: Test timed out after 180000ms — VFP process was killed
+    ok    TestOpenViewRefusesASelectWithoutAResultSet  1172ms
+
+  8 passed, 3 failed, 0 skipped  (206218ms)
+
+M8, RowWhere() ignoring lDetectConflicts (the other user's change is overwritten):
+    FAIL  TestOpenViewDetectsAConflict  3828ms
+          [sqlite] Save() over another user's change: .T.  
+[sqlite] the other user's change was overwritten
+[sqlite] Refresh() did not bring the other user's status
+[mssql] Save() over another user's change: .T.  
+[mssql] the other user's change was overwritten
+[mssql] Refresh() did not bring the other user's status
+[mariadb] Save() over another user's change: .T.  
+[mariadb] the other user's change was overwritten
+[mariadb] Refresh() did not bring the other user's status
+[mysql] Save() over another user's change: .T.  
+[mysql] the other user's change was overwritten
+[mysql] Refresh() did not bring the other user's status
+[postgresql] Save() over another user's change: .T.  
+[postgresql] the other user's change was overwritten
+[postgresql] Refresh() did not bring the other user's status
+[firebird] Save() over another user's change: .T.  
+[firebird] the other user's change was overwritten
+[firebird] Refresh() did not bring the other user's status
+
+    ok    TestOpenViewRefusesASelectWithoutAResultSet  1344ms
+
+  10 passed, 1 failed, 0 skipped  (30250ms)
+
+Red of the unit tests against 1.1.0: TestPublicMethodsAreTheDocumentedOnes (OPENVIEW missing) and TestDefaults (cVersion 1.1.0, expected 1.2.0).
+    FAIL  TestPublicMethodsAreTheDocumentedOnes  47ms
+          Expected [ATTACH,BEGINTRANSACTION,CLEARERRORS,CLOSE,CLOSEALL,CLOSEGROUP,COLUMNEXISTS,COMMIT,CONNECT,CREATEDATABASE,CREATETABLE,CREATETABLEFROMCURSOR,DATABASEEXISTS,DISCARD,DISCONNECT,EXECUTE,GENERATESCRIPT,GETCOLUMNS,GETDATABASES,GETOBJECTS,GETPRIMARYKEY,GETTABLES,HASCHANGES,LASTID,MIGRATE,NATURALNAME,NEWGUID,NEWTABLEDEF,NEXTNUMBER,OPEN,OPENVIEW,PING,QUERY,REFRESH,ROLLBACK,SAVE,SAVEGROUP,SCALAR,SERVERDATE,SERVERVERSION,TABLEEXISTS,TABLESCRIPT,USEDATABASE] but was [ATTACH,BEGINTRANSACTION,CLEARERRORS,CLOSE,CLOSEALL,CLOSEGROUP,COLUMNEXISTS,COMMIT,CONNECT,CREATEDATABASE,CREATETABLE,CREATETABLEFROMCURSOR,DATABASEEXISTS,DISCARD,DISCONNECT,EXECUTE,GENERATESCRIPT,GETCOLUMNS,GETDATABASES,GETOBJECTS,GETPRIMARYKEY,GETTABLES,HASCHANGES,LASTID,MIGRATE,NATURALNAME,NEWGUID,NEWTABLEDEF,NEXTNUMBER,OPEN,PING,QUERY,REFRESH,ROLLBACK,SAVE,SAVEGROUP,SCALAR,SERVERDATE,SERVERVERSION,TABLEEXISTS,TABLESCRIPT,USEDATABASE]
+    ok    TestNamesFromVfpAreLowerCaseInSqlServer  63ms
+    ok    TestPrimaryKeyQueriesUseThePlainName  62ms
+    ok    TestPrimaryKeyQueryEscapesQuotes  63ms
+    ok    TestCreateTableColumnsAreNullableByDefault  47ms
+    ok    TestCreateTableNotNullAndDefault  47ms
+    ok    TestCreateTableCompositePrimaryKey  62ms
+    ok    TestCreateTableAutoIncrementColumn  63ms
+    ok    TestCreateTableHasNoAutomaticKeyByDefault  62ms
+    ok    TestCreateTableWithAutoKeyName  78ms
+    ok    TestCreateTableNamesAreUpperCaseInFirebird  63ms
+    ok    TestCreateTableNeverQuotesNames  62ms
+    ok    TestForeignKeyWithActions  63ms
+    ok    TestForeignKeyActionShortcuts  47ms
+    ok    TestForeignKeyRestrictIsNoActionInSqlServer  47ms
+    ok    TestForeignKeyWithoutActions  47ms
+    ok    TestCompositeForeignKey  63ms
+    ok    TestIndexesFollowTheTable  63ms
+    ok    TestConnectionStringSqlServer  47ms
+    ok    TestConnectionStringSqlServerPortGoesAfterAComma  63ms
+    ok    TestConnectionStringSqlServerWindowsAuthentication  62ms
+    ok    TestConnectionValueWithASemicolonIsBraced  63ms
+    ok    TestConnectionValueWithABraceIsDoubled  47ms
+    ok    TestConnectionValueWithEqualsOrBlanksIsBraced  63ms
+    ok    TestConnectionStringPortHasNoDecimals  47ms
+    ok    TestConnectionStringPostgreSqlDefaults  63ms
+    ok    TestConnectionStringMySqlWithoutPort  47ms
+    ok    TestConnectionStringFirebird  47ms
+    ok    TestConnectionStringSqlite  62ms
+    ok    TestConnectionStringSqlitePathWithASemicolonIsAnUri  47ms
+    ok    TestConnectionOptionsAreAppended  46ms
+    ok    TestFirebirdLocalPathForTheExistenceCheck  63ms
+    ok    TestParameterIsTranslated  46ms
+    ok    TestSeveralParameters  63ms
+    ok    TestParameterInsideQuotesIsLeftAlone  46ms
+    ok    TestPostgreSqlCastIsLeftAlone  63ms
+    ok    TestColonBeforeADigitIsNotAParameter  62ms
+    ok    TestSqlWithoutParametersIsUnchanged  63ms
+    ok    TestSqliteParametersGoAsUtf8  62ms
+    ok    TestOtherEnginesParametersAreNotConverted  47ms
+    ok    TestInsertSqlServerReadsScopeIdentity  63ms
+    ok    TestInsertReturningEngines  47ms
+    ok    TestMySqlDoesNotReturn  47ms
+    ok    TestInsertWithoutColumnsUsesDefaultValues  63ms
+    ok    TestTextIsTrimmedOnSave  78ms
+    ok    TestEmptyDateIsNullWhenNullable  62ms
+    ok    TestEmptyDateIsTheMinimumWhenNotNullable  63ms
+    ok    TestEmptyDateModeMin  62ms
+    ok    TestValuesThatTravelAsTheyAre  47ms
+    ok    TestBigIntTextBecomesANumber  47ms
+    ok    TestOtherTextStaysText  31ms
+    ok    TestMinimumDates  47ms
+    FAIL  TestDefaults  62ms
+          Expected [1.2.0] but was [1.1.0]
+    ok    TestExecuteWithoutAConnection  63ms
+    ok    TestStrictRaisesWithoutAConnection  62ms
+    ok    TestClearErrors  31ms
+    ok    TestSaveOfAnAliasNotOpenedByFoxRemote  47ms
+    ok    TestTransactionsNeedAConnection  47ms
+    ok    TestSqliteConnectToAMissingFile  47ms
+    ok    TestAttachNeedsAHandle  31ms
+    ok    TestMigrateOfNothing  47ms
+    ok    TestOpenNeedsATable  47ms
+    ok    TestGenerateScriptOfADbf  47ms
+    ok    TestGenerateScriptOfAFolder  62ms
+    ok    TestGenerateScriptLeavesTheDefaultFolder  47ms
+
+  74 passed, 2 failed, 0 skipped  (4205ms)
+
+Red of the two Query tests of P4 against the foxremote.prg of P3 (0275ae9), every engine: the Custom-based parameters object raises error 1924 in SQLite (the other five engines pass it), and the :name without a value waits on VFP's View Parameter dialog until its time limit.
+    FAIL  TestQueryWithACustomBasedParamsObject  1000ms
+          [sqlite] raised 1924 CONTROLS is not an object. (prepareparams, line 658)
+
+    ERROR TestQueryWithAMissingParameterFails  180000ms
+          Infrastructure error: Test timed out after 180000ms — VFP process was killed. It was waiting on this dialog: View Parameter
+    ok    TestScalarReturnsNumbers  1000ms
+    ok    TestExecuteReturnsAffectedRows  1234ms
+
+  3 passed, 2 failed, 0 skipped  (184750ms)
+
+M9, PrepareParams() without the skip (every member copied, as in 0275ae9):
+    FAIL  TestQueryWithACustomBasedParamsObject  921ms
+          [sqlite] raised 1924 CONTROLS is not an object. (prepareparams, line 682)
+
+    ok    TestQueryWithAMissingParameterFails  1000ms
+    ok    TestScalarReturnsNumbers  953ms
+    ok    TestExecuteReturnsAffectedRows  1234ms
+
+  4 passed, 1 failed, 0 skipped  (5343ms)
+
+M10, Run() without ParamsHaveValues():
+    ERROR TestQueryWithAMissingParameterFails  180000ms
+          Infrastructure error: Test timed out after 180000ms — VFP process was killed. It was waiting on this dialog: View Parameter
+    ok    TestScalarReturnsNumbers  984ms
+    ok    TestExecuteReturnsAffectedRows  1500ms
+
+  4 passed, 1 failed, 0 skipped  (184812ms)
+
+Red of the P5 tests (name, value pairs and Params()) against the foxremote.prg of P4 (90c268b): without a server, Params() does not exist (error 1734) and Execute() with pairs has too many arguments (error 94); in the six engines, Query() and Execute() with pairs raise error 94 and Params() error 1734.
+foxproof run --prg tests\FoxRemoteTests.prg
+
+    FAIL  TestPublicMethodsAreTheDocumentedOnes  63ms
+          Expected [ATTACH,BEGINTRANSACTION,CLEARERRORS,CLOSE,CLOSEALL,CLOSEGROUP,COLUMNEXISTS,COMMIT,CONNECT,CREATEDATABASE,CREATETABLE,CREATETABLEFROMCURSOR,DATABASEEXISTS,DISCARD,DISCONNECT,EXECUTE,GENERATESCRIPT,GETCOLUMNS,GETDATABASES,GETOBJECTS,GETPRIMARYKEY,GETTABLES,HASCHANGES,LASTID,MIGRATE,NATURALNAME,NEWGUID,NEWTABLEDEF,NEXTNUMBER,OPEN,OPENVIEW,PARAMS,PING,QUERY,REFRESH,ROLLBACK,SAVE,SAVEGROUP,SCALAR,SERVERDATE,SERVERVERSION,TABLEEXISTS,TABLESCRIPT,USEDATABASE] but was [ATTACH,BEGINTRANSACTION,CLEARERRORS,CLOSE,CLOSEALL,CLOSEGROUP,COLUMNEXISTS,COMMIT,CONNECT,CREATEDATABASE,CREATETABLE,CREATETABLEFROMCURSOR,DATABASEEXISTS,DISCARD,DISCONNECT,EXECUTE,GENERATESCRIPT,GETCOLUMNS,GETDATABASES,GETOBJECTS,GETPRIMARYKEY,GETTABLES,HASCHANGES,LASTID,MIGRATE,NATURALNAME,NEWGUID,NEWTABLEDEF,NEXTNUMBER,OPEN,OPENVIEW,PING,QUERY,REFRESH,ROLLBACK,SAVE,SAVEGROUP,SCALAR,SERVERDATE,SERVERVERSION,TABLEEXISTS,TABLESCRIPT,USEDATABASE]
+    FAIL  TestParamsKeepsTheSevenTypes  47ms
+          Property PARAMS is not found. [testparamskeepstheseventypes:699]
+    FAIL  TestParamsWithAnOddCountFails  63ms
+          Property PARAMS is not found. [testparamswithanoddcountfails:715]
+    FAIL  TestParamsWithABadNameFails  47ms
+          Property PARAMS is not found. [testparamswithabadnamefails:723]
+    FAIL  TestParamsWithANameTwiceFails  78ms
+          Property PARAMS is not found. [testparamswithanametwicefails:740]
+    FAIL  TestParamsWithAnArrayFails  141ms
+          Property PARAMS is not found. [testparamswithanarrayfails:750]
+    FAIL  TestParamsOfAnObjectThenMoreFails  62ms
+          Property PARAMS is not found. [testparamsofanobjectthenmorefails:759]
+    FAIL  TestMalformedPairsFailBeforeTheServer  79ms
+          Must specify additional parameters. [execute:464]
+
+  75 passed, 8 failed, 0 skipped  (5955ms)
+
+foxproof run --prg tests\FoxRemoteIntegrationTests.prg --category Query  (every engine)
+
+    FAIL  TestQueryWithParameterPairs  610ms
+          [sqlite] raised 94 Must specify additional parameters. (query, line 448)
+[mssql] raised 94 Must specify additional parameters. (query, line 448)
+[mariadb] raised 94 Must specify additional parameters. (query, line 448)
+[mysql] raised 94 Must specify additional parameters. (query, line 448)
+[postgresql] raised 94 Must specify additional parameters. (query, line 448)
+[firebird] raised 94 Must specify additional parameters. (query, line 448)
+
+    FAIL  TestExecuteAndScalarWithPairs  985ms
+          [sqlite] raised 94 Must specify additional parameters. (execute, line 464)
+[mssql] raised 94 Must specify additional parameters. (execute, line 464)
+[mariadb] raised 94 Must specify additional parameters. (execute, line 464)
+[mysql] raised 94 Must specify additional parameters. (execute, line 464)
+[postgresql] raised 94 Must specify additional parameters. (execute, line 464)
+[firebird] raised 94 Must specify additional parameters. (execute, line 464)
+
+    FAIL  TestOpenWithParamsHelper  1297ms
+          [sqlite] raised 1734 Property PARAMS is not found. (openwithparamshelper, line 436)
+[mssql] raised 1734 Property PARAMS is not found. (openwithparamshelper, line 436)
+[mariadb] raised 1734 Property PARAMS is not found. (openwithparamshelper, line 436)
+[mysql] raised 1734 Property PARAMS is not found. (openwithparamshelper, line 436)
+[postgresql] raised 1734 Property PARAMS is not found. (openwithparamshelper, line 436)
+[firebird] raised 1734 Property PARAMS is not found. (openwithparamshelper, line 436)
+
+  5 passed, 3 failed, 0 skipped  (9049ms)
+
+M11, PairsToParams() without its checks (odd count, name, name twice), without a server:
+foxproof run --prg tests\FoxRemoteTests.prg
+
+    FAIL  TestParamsWithAnOddCountFails  63ms
+          Expected [the parameter town has no value: the arguments go in pairs, name and value] but was []
+    FAIL  TestParamsWithABadNameFails  63ms
+          Incorrect property name. [pairstoparams:542]
+    FAIL  TestParamsWithANameTwiceFails  78ms
+          Expected [the parameter CITY is twice] but was []
+    FAIL  TestMalformedPairsFailBeforeTheServer  62ms
+          Incorrect property name. [pairstoparams:542]
+
+  79 passed, 4 failed, 0 skipped  (5510ms)
+
+M12, Query() taking its third argument always as the object of parameters, every engine:
+foxproof run --prg tests\FoxRemoteIntegrationTests.prg --category Query  (every engine)
+
+    FAIL  TestQueryWithParameterPairs  953ms
+          [sqlite] pairs: Query() failed: the parameter :city has no value in oParams
+[mssql] pairs: Query() failed: the parameter :city has no value in oParams
+[mariadb] pairs: Query() failed: the parameter :city has no value in oParams
+[mysql] pairs: Query() failed: the parameter :city has no value in oParams
+[postgresql] pairs: Query() failed: the parameter :city has no value in oParams
+[firebird] pairs: Query() failed: the parameter :city has no value in oParams
+
+  7 passed, 1 failed, 0 skipped  (10984ms)
+
+Red of the P6 tests against the foxremote.prg of P5 (cb0566a): without a server, a ?variable that is LOCAL reaches the connection check (not connected) and no_primary_key has the old text; in the engines, the LOCAL ?lcCity waits on VFP's View Parameter dialog until the time limit.
+foxproof run --prg tests\FoxRemoteTests.prg
+
+    FAIL  TestAQuestionMarkVariableFails  62ms
+          Expected [the variable lcX of ?lcX is not visible to the library (a LOCAL is not): use :name with pairs or oParams] but was [not connected]
+    FAIL  TestNoPrimaryKeySaysTheWayOut  62ms
+          Expected [an updatable view needs a key, and items has no primary key: pass cKey, or set cAutoKeyName before creating the table] but was [an updatable view needs a key, and items has no primary key: pass cKey]
+
+  83 passed, 2 failed, 0 skipped  (4986ms)
+
+foxproof run --prg tests\FoxRemoteIntegrationTests.prg --category Query  (every engine)
+
+    ERROR TestQueryWithAQuestionMarkVariableFails  180000ms
+          Infrastructure error: Test timed out after 180000ms — VFP process was killed. It was waiting on this dialog: View Parameter
+
+  8 passed, 1 failed, 0 skipped  (190235ms)
+
+M13, Run() without the ?variable guard, without a server:
+foxproof run --prg tests\FoxRemoteTests.prg
+
+    FAIL  TestAQuestionMarkVariableFails  46ms
+          Expected [the variable lcX of ?lcX is not visible to the library (a LOCAL is not): use :name with pairs or oParams] but was [not connected]
+
+  84 passed, 1 failed, 0 skipped  (5061ms)

@@ -1,0 +1,179 @@
+Integration: FoxRemote 1.1.0 against SQLite 3.43, SQL Server 2025 Express (ODBC Driver 17.10), MariaDB 11.8, MySQL 8.4 (MariaDB Connector/ODBC 3.2), PostgreSQL 18, Firebird 5.0.4 (01-11-2026)
+foxproof run --prg tests\FoxRemoteIntegrationTests.prg
+
+  TestRemoteIntegration
+    ok    TestConnectDoesNotCreateAMissingDatabase  610ms
+    ok    TestCreateDatabaseThenConnect  2578ms
+    ok    TestConnectLandsInTheRequestedDatabase  843ms
+    ok    TestConnectWithASemicolonInThePassword  313ms
+    ok    TestConnectWithWindowsAuthentication  125ms
+    ok    TestConnectDoesNotChangeGlobalSettings  312ms
+    ok    TestConnectFailureIsReportedWithoutADialog  359ms
+    ok    TestErrorsAreCountedWithCodeAndStatement  328ms
+    ok    TestStrictModeThrows  281ms
+    ok    TestQueryWithNamedParametersFromLocals  1313ms
+    ok    TestScalarReturnsNumbers  1390ms
+    ok    TestExecuteReturnsAffectedRows  1531ms
+    ok    TestTransactionCommitPersists  1188ms
+    ok    TestTransactionRollbackUndoes  1266ms
+    ok    TestDisconnectWithAnOpenTransactionRollsBack  1031ms
+    ok    TestSaveInsertIsCommittedAndReturnsTheId  1625ms
+    ok    TestSaveInsertIntoATableWithATrigger  860ms
+    ok    TestSaveUpdatesOnlyTheChangedColumns  1562ms
+    ok    TestSaveOfAValueWrittenAgainSucceeds  1203ms
+    ok    TestSaveDeletesTheRow  1782ms
+    ok    TestSaveFailureReturnsFalseAndKeepsTheEdits  1187ms
+    ok    TestSaveOfAnUnknownAliasLeavesNoTransactionOpen  1141ms
+    ok    TestSaveOfAReadOnlyCursorKeepsTheSettings  844ms
+    ok    TestSaveGroupSendsEveryCursor  2281ms
+    ok    TestOpenForWritingWithoutAPrimaryKeyIsRefused  797ms
+    ok    TestCloseGroupThenReopenTheSameAlias  844ms
+    ok    TestRefreshReloadsAReadOnlyCursor  1328ms
+    ok    TestRefreshRefusesWithPendingChanges  1062ms
+    ok    TestCloseAllLeavesTheUsersCursorsOpen  844ms
+    ok    TestAccentedTextRoundTrip  1297ms
+    ok    TestAccentedTextInTheSqlRoundTrip  906ms
+    ok    TestSaveDoesNotPadVarchar  1125ms
+    ok    TestLongTextRoundTrip  1156ms
+    ok    TestEmptyDateIsStoredAsNull  1313ms
+    ok    TestServerTextIsNotUcs2  281ms
+    ok    TestGetPrimaryKey  843ms
+    ok    TestGetTablesReturnsACursor  1454ms
+    ok    TestGetDatabasesListsTheConnectedOne  297ms
+    ok    TestGetObjectsListsTablesAndViews  1438ms
+    ok    TestGetColumnsReturnsACursor  859ms
+    ok    TestGetColumnsKeepsTheServersNames  812ms
+    ok    TestLastIdAfterExecute  1469ms
+    ok    TestMigrateRefusesAnExistingTable  1219ms
+    ok    TestMigrateReplaceCopiesRowsWithUsableNames  1265ms
+    ok    TestMigrateOfAFolderKeepsTheDefaultDirectory  719ms
+    ok    TestCreateTableFromCursorKeepsCharacterColumns  610ms
+    ok    TestCreateTableWithIndexAndForeignKey  2734ms
+    ok    TestQueryAfterTheServerDroppedTheConnection  7328ms
+    ok    TestWriteAfterAnIdleConnectionWasDropped  2484ms
+    ok    TestWriteWhenTheConnectionDropsIsNotRepeated  7375ms
+    ok    TestConnectionLostInsideATransaction  7156ms
+    ok    TestConnectionLostWithoutAutoReconnect  6781ms
+    ok    TestSaveDetectsAConflict  1390ms
+    ok    TestConflictDetectionAllowsOtherChanges  1375ms
+    ok    TestNextNumberCountsUp  2031ms
+    ok    TestNextNumberHoldsTheRowUntilCommit  13485ms
+    ok    TestHasChangesAndCloseWithChanges  1516ms
+    ok    TestStrictSaveFailureLeavesNoTransactionOpen  1015ms
+    ok    TestLibraryHasNoUserInterface  46ms
+
+  59 passed, 0 failed, 0 skipped  (102607ms)
+
+Without a server: foxproof run --prg tests\FoxRemoteTests.prg
+
+  TestRemoteSql
+    ok    TestTypesSqlServer  31ms
+    ok    TestTypesMySql  47ms
+    ok    TestTypesMariaDb  47ms
+    ok    TestTypesPostgreSql  31ms
+    ok    TestTypesFirebird  32ms
+    ok    TestTypesSqlite  16ms
+    ok    TestTypeOfAZeroWidthCharacterIsOne  31ms
+    ok    TestNumericPrecisionIsCappedAt38  32ms
+    ok    TestNamesAreLowerCaseInPostgreSqlMySqlAndSqlite  32ms
+    ok    TestNamesAreUpperCaseInFirebird  31ms
+    ok    TestNamesAreKeptInSqlServer  31ms
+    ok    TestPublicMethodsAreTheDocumentedOnes  32ms
+    ok    TestNamesFromVfpAreLowerCaseInSqlServer  47ms
+    ok    TestPrimaryKeyQueriesUseThePlainName  31ms
+    ok    TestPrimaryKeyQueryEscapesQuotes  31ms
+    ok    TestCreateTableColumnsAreNullableByDefault  31ms
+    ok    TestCreateTableNotNullAndDefault  31ms
+    ok    TestCreateTableCompositePrimaryKey  46ms
+    ok    TestCreateTableAutoIncrementColumn  47ms
+    ok    TestCreateTableHasNoAutomaticKeyByDefault  32ms
+    ok    TestCreateTableWithAutoKeyName  31ms
+    ok    TestCreateTableNamesAreUpperCaseInFirebird  16ms
+    ok    TestCreateTableNeverQuotesNames  47ms
+    ok    TestForeignKeyWithActions  31ms
+    ok    TestForeignKeyActionShortcuts  31ms
+    ok    TestForeignKeyRestrictIsNoActionInSqlServer  15ms
+    ok    TestForeignKeyWithoutActions  31ms
+    ok    TestCompositeForeignKey  31ms
+    ok    TestIndexesFollowTheTable  31ms
+    ok    TestConnectionStringSqlServer  32ms
+    ok    TestConnectionStringSqlServerPortGoesAfterAComma  47ms
+    ok    TestConnectionStringSqlServerWindowsAuthentication  46ms
+    ok    TestConnectionValueWithASemicolonIsBraced  32ms
+    ok    TestConnectionValueWithABraceIsDoubled  32ms
+    ok    TestConnectionValueWithEqualsOrBlanksIsBraced  46ms
+    ok    TestConnectionStringPortHasNoDecimals  31ms
+    ok    TestConnectionStringPostgreSqlDefaults  32ms
+    ok    TestConnectionStringMySqlWithoutPort  31ms
+    ok    TestConnectionStringFirebird  47ms
+    ok    TestConnectionStringSqlite  47ms
+    ok    TestConnectionStringSqlitePathWithASemicolonIsAnUri  31ms
+    ok    TestConnectionOptionsAreAppended  31ms
+    ok    TestFirebirdLocalPathForTheExistenceCheck  32ms
+    ok    TestParameterIsTranslated  47ms
+    ok    TestSeveralParameters  31ms
+    ok    TestParameterInsideQuotesIsLeftAlone  31ms
+    ok    TestPostgreSqlCastIsLeftAlone  15ms
+    ok    TestColonBeforeADigitIsNotAParameter  31ms
+    ok    TestSqlWithoutParametersIsUnchanged  31ms
+    ok    TestSqliteParametersGoAsUtf8  31ms
+    ok    TestOtherEnginesParametersAreNotConverted  31ms
+    ok    TestInsertSqlServerReadsScopeIdentity  31ms
+    ok    TestInsertReturningEngines  32ms
+    ok    TestMySqlDoesNotReturn  31ms
+    ok    TestInsertWithoutColumnsUsesDefaultValues  46ms
+    ok    TestTextIsTrimmedOnSave  47ms
+    ok    TestEmptyDateIsNullWhenNullable  32ms
+    ok    TestEmptyDateIsTheMinimumWhenNotNullable  31ms
+    ok    TestEmptyDateModeMin  31ms
+    ok    TestValuesThatTravelAsTheyAre  31ms
+    ok    TestBigIntTextBecomesANumber  31ms
+    ok    TestOtherTextStaysText  31ms
+    ok    TestMinimumDates  32ms
+    ok    TestDefaults  31ms
+    ok    TestExecuteWithoutAConnection  32ms
+    ok    TestStrictRaisesWithoutAConnection  32ms
+    ok    TestClearErrors  31ms
+    ok    TestSaveOfAnAliasNotOpenedByFoxRemote  32ms
+    ok    TestTransactionsNeedAConnection  32ms
+    ok    TestSqliteConnectToAMissingFile  31ms
+    ok    TestAttachNeedsAHandle  32ms
+    ok    TestMigrateOfNothing  31ms
+    ok    TestOpenNeedsATable  31ms
+    ok    TestGenerateScriptOfADbf  32ms
+    ok    TestGenerateScriptOfAFolder  32ms
+    ok    TestGenerateScriptLeavesTheDefaultFolder  31ms
+
+  76 passed, 0 failed, 0 skipped  (2534ms)
+
+Red before the methods existed (the same two integration tests, every engine): error 1734, Property GETDATABASES / GETOBJECTS is not found.
+    FAIL  TestGetDatabasesListsTheConnectedOne  390ms
+          [sqlite] raised 1734 Property GETDATABASES is not found. (getdatabasesliststheconnectedone, line 902)
+[mssql] raised 1734 Property GETDATABASES is not found. (getdatabasesliststheconnectedone, line 902)
+[mariadb] raised 1734 Property GETDATABASES is not found. (getdatabasesliststheconnectedone, line 902)
+[mysql] raised 1734 Property GETDATABASES is not found. (getdatabasesliststheconnectedone, line 902)
+[postgresql] raised 1734 Property GETDATABASES is not found. (getdatabasesliststheconnectedone, line 902)
+[firebird] raised 1734 Property GETDATABASES is not found. (getdatabasesliststheconnectedone, line 902)
+
+
+  0 passed, 1 failed, 0 skipped  (390ms)
+    FAIL  TestGetObjectsListsTablesAndViews  844ms
+          [sqlite] raised 1734 Property GETOBJECTS is not found. (getobjectsliststablesandviews, line 934)
+[mssql] raised 1734 Property GETOBJECTS is not found. (getobjectsliststablesandviews, line 934)
+[mariadb] raised 1734 Property GETOBJECTS is not found. (getobjectsliststablesandviews, line 934)
+[mysql] raised 1734 Property GETOBJECTS is not found. (getobjectsliststablesandviews, line 934)
+[postgresql] raised 1734 Property GETOBJECTS is not found. (getobjectsliststablesandviews, line 934)
+[firebird] raised 1734 Property GETOBJECTS is not found. (getobjectsliststablesandviews, line 934)
+
+
+  0 passed, 1 failed, 0 skipped  (844ms)
+
+Red of the unit tests against 1.0.1: TestPublicMethodsAreTheDocumentedOnes (GETDATABASES, GETOBJECTS missing) and TestDefaults (cVersion 1.0.1, expected 1.1.0).
+    FAIL  TestPublicMethodsAreTheDocumentedOnes  31ms
+          Expected [ATTACH,BEGINTRANSACTION,CLEARERRORS,CLOSE,CLOSEALL,CLOSEGROUP,COLUMNEXISTS,COMMIT,CONNECT,CREATEDATABASE,CREATETABLE,CREATETABLEFROMCURSOR,DATABASEEXISTS,DISCARD,DISCONNECT,EXECUTE,GENERATESCRIPT,GETCOLUMNS,GETDATABASES,GETOBJECTS,GETPRIMARYKEY,GETTABLES,HASCHANGES,LASTID,MIGRATE,NATURALNAME,NEWGUID,NEWTABLEDEF,NEXTNUMBER,OPEN,PING,QUERY,REFRESH,ROLLBACK,SAVE,SAVEGROUP,SCALAR,SERVERDATE,SERVERVERSION,TABLEEXISTS,TABLESCRIPT,USEDATABASE] but was [ATTACH,BEGINTRANSACTION,CLEARERRORS,CLOSE,CLOSEALL,CLOSEGROUP,COLUMNEXISTS,COMMIT,CONNECT,CREATEDATABASE,CREATETABLE,CREATETABLEFROMCURSOR,DATABASEEXISTS,DISCARD,DISCONNECT,EXECUTE,GENERATESCRIPT,GETCOLUMNS,GETPRIMARYKEY,GETTABLES,HASCHANGES,LASTID,MIGRATE,NATURALNAME,NEWGUID,NEWTABLEDEF,NEXTNUMBER,OPEN,PING,QUERY,REFRESH,ROLLBACK,SAVE,SAVEGROUP,SCALAR,SERVERDATE,SERVERVERSION,TABLEEXISTS,TABLESCRIPT,USEDATABASE]
+
+  0 passed, 1 failed, 0 skipped  (31ms)
+    FAIL  TestDefaults  32ms
+          Expected [1.1.0] but was [1.0.1]
+
+  0 passed, 1 failed, 0 skipped  (32ms)

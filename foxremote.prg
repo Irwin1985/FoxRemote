@@ -1,4 +1,4 @@
-* FoxRemote 1.0 - one API for remote databases from Visual FoxPro 9, through ODBC.
+* FoxRemote 1.2: one API for remote databases from Visual FoxPro 9, through ODBC.
 * Engines: SQL Server, MySQL, MariaDB, PostgreSQL, Firebird and SQLite.
 * License: MIT. Manual: README.md.
 *
@@ -25,7 +25,7 @@ RETURN
 * RemoteDatabase: what every engine shares.
 * ======================================================================== *
 DEFINE CLASS RemoteDatabase AS Custom
-	cVersion = "1.0.1"
+	cVersion = "1.2.0"
 	cEngine = ""
 
 	* Connection
@@ -72,8 +72,10 @@ DEFINE CLASS RemoteDatabase AS Custom
 	* The row count of an UPDATE is the rows it changed, not the rows it found (MySQL, MariaDB).
 	lCountsChangedRows = .F.
 
-	PROTECTED oCursors, lAttached, cLastInsertTable, tLastActivity, oOpenError
+	PROTECTED oCursors, lAttached, cLastInsertTable, tLastActivity, oOpenError, cParamNames
 	oCursors = .NULL.
+	* The :names that the last TranslateParams() turned into parameters, comma-separated.
+	cParamNames = ""
 	oOpenError = .NULL.
 	lAttached = .F.
 	cLastInsertTable = ""
@@ -217,7 +219,7 @@ DEFINE CLASS RemoteDatabase AS Custom
 		llRolledBack = .F.
 		IF This.lInTransaction
 			* Rolled back explicitly: a driver may keep the attachment alive on the server when it is
-			* asked to disconnect with a transaction open (measured with Firebird).
+			* asked to disconnect with a transaction open (Firebird does).
 			=SQLROLLBACK(This.nHandle)
 			=SQLSETPROP(This.nHandle, "Transactions", 1)
 			This.lInTransaction = .F.
@@ -443,12 +445,23 @@ DEFINE CLASS RemoteDatabase AS Custom
 	* ==================================================================== *
 	* Queries
 	* ==================================================================== *
-	FUNCTION Query(tcSql, tcCursor, toParams)
-		LOCAL lnR
+	* After tcCursor: oParams, or name, value pairs (12 at most).
+	FUNCTION Query(tcSql, tcCursor, tv1, tv2, tv3, tv4, tv5, tv6, tv7, tv8, tv9, tv10, tv11, tv12, tv13, ;
+		tv14, tv15, tv16, tv17, tv18, tv19, tv20, tv21, tv22, tv23, tv24, tv25)
+		LOCAL lnR, loParams
 		IF EMPTY(tcCursor)
 			tcCursor = "c_fr_query"
 		ENDIF
-		lnR = This.Run(tcSql, tcCursor, toParams)
+		IF PCOUNT() - 2 = 1 AND TYPE("tv1", 1) # "A" AND VARTYPE(tv1) $ "LX"
+			loParams = tv1
+		ELSE
+			loParams = This.PairsToParams(PCOUNT() - 2, @tv1, @tv2, @tv3, @tv4, @tv5, @tv6, @tv7, @tv8, @tv9, @tv10, @tv11, @tv12, @tv13, ;
+			@tv14, @tv15, @tv16, @tv17, @tv18, @tv19, @tv20, @tv21, @tv22, @tv23, @tv24, @tv25)
+			IF VARTYPE(loParams) == "L"
+				RETURN .F.
+			ENDIF
+		ENDIF
+		lnR = This.Run(tcSql, tcCursor, loParams)
 		IF lnR < 0
 			RETURN .F.
 		ENDIF
@@ -458,20 +471,115 @@ DEFINE CLASS RemoteDatabase AS Custom
 		RETURN .T.
 	ENDFUNC
 
-	* Rows affected, or -1 on failure.
-	FUNCTION Execute(tcSql, toParams)
-		LOCAL lcHead
+	* Rows affected, or -1 on failure. After tcSql: oParams, or name, value pairs (13 at most).
+	FUNCTION Execute(tcSql, tv1, tv2, tv3, tv4, tv5, tv6, tv7, tv8, tv9, tv10, tv11, tv12, tv13, ;
+		tv14, tv15, tv16, tv17, tv18, tv19, tv20, tv21, tv22, tv23, tv24, tv25, tv26)
+		LOCAL lcHead, loParams
+		IF PCOUNT() - 1 = 1 AND TYPE("tv1", 1) # "A" AND VARTYPE(tv1) $ "LX"
+			loParams = tv1
+		ELSE
+			loParams = This.PairsToParams(PCOUNT() - 1, @tv1, @tv2, @tv3, @tv4, @tv5, @tv6, @tv7, @tv8, @tv9, @tv10, @tv11, @tv12, @tv13, ;
+			@tv14, @tv15, @tv16, @tv17, @tv18, @tv19, @tv20, @tv21, @tv22, @tv23, @tv24, @tv25, @tv26)
+			IF VARTYPE(loParams) == "L"
+				RETURN -1
+			ENDIF
+		ENDIF
 		lcHead = UPPER(LEFT(LTRIM(CHRTRAN(tcSql, CHR(13) + CHR(10) + CHR(9), "   ")), 12))
 		IF lcHead = "INSERT INTO "
 			This.cLastInsertTable = This.FirstWord(SUBSTR(LTRIM(tcSql), 13))
 		ENDIF
-		RETURN This.Run(tcSql, "", toParams)
+		RETURN This.Run(tcSql, "", loParams)
 	ENDFUNC
 
-	FUNCTION Scalar(tcSql, toParams)
-		LOCAL lvValue, laF[1]
+	* name, value, ... as the object of parameters of Open(), OpenView() and NextNumber(), where
+	* oParams is not the last argument. A malformed pair gives .NULL. and bad_argument.
+	FUNCTION Params(tv1, tv2, tv3, tv4, tv5, tv6, tv7, tv8, tv9, tv10, tv11, tv12, tv13, ;
+		tv14, tv15, tv16, tv17, tv18, tv19, tv20, tv21, tv22, tv23, tv24, tv25, tv26)
+		LOCAL loParams
+		IF PCOUNT() = 0
+			RETURN CREATEOBJECT("Empty")
+		ENDIF
+		loParams = This.PairsToParams(PCOUNT(), @tv1, @tv2, @tv3, @tv4, @tv5, @tv6, @tv7, @tv8, @tv9, @tv10, @tv11, @tv12, @tv13, ;
+			@tv14, @tv15, @tv16, @tv17, @tv18, @tv19, @tv20, @tv21, @tv22, @tv23, @tv24, @tv25, @tv26)
+		RETURN IIF(VARTYPE(loParams) == "O", loParams, .NULL.)
+	ENDFUNC
+
+	* The variable arguments of Query(), Execute(), Scalar() and Params(): .NULL. when there are none,
+	* the object itself when the first one is an object, or an Empty with one property per name,
+	* value pair. A malformed pair is bad_argument and returns .F. The values are not touched.
+	PROTECTED FUNCTION PairsToParams(tnArgs, tv1, tv2, tv3, tv4, tv5, tv6, tv7, tv8, tv9, tv10, tv11, tv12, tv13, ;
+		tv14, tv15, tv16, tv17, tv18, tv19, tv20, tv21, tv22, tv23, tv24, tv25, tv26)
+		LOCAL loParams, lnI, lcVar, lvName, lcName
+		IF tnArgs <= 0
+			RETURN .NULL.
+		ENDIF
+		IF TYPE("tv1", 1) # "A" AND VARTYPE(tv1) == "O"
+			IF tnArgs > 1
+				RETURN This.Fail("bad_argument", "after the object of parameters there is nothing else: either an object, or name and value pairs")
+			ENDIF
+			RETURN tv1
+		ENDIF
+		IF MOD(tnArgs, 2) = 1
+			lcVar = "tv" + TRANSFORM(tnArgs)
+			lcName = IIF(TYPE(lcVar, 1) == "A", "", This.PairName(EVALUATE(lcVar)))
+			RETURN This.Fail("bad_argument", IIF(EMPTY(lcName), "the parameter name at position " + TRANSFORM(tnArgs) + " is not a valid name", ;
+				"the parameter " + lcName + " has no value: the arguments go in pairs, name and value"))
+		ENDIF
+		loParams = CREATEOBJECT("Empty")
+		FOR lnI = 1 TO tnArgs STEP 2
+			lcVar = "tv" + TRANSFORM(lnI)
+			lcName = IIF(TYPE(lcVar, 1) == "A", "", This.PairName(EVALUATE(lcVar)))
+			IF EMPTY(lcName)
+				RETURN This.Fail("bad_argument", "the parameter name at position " + TRANSFORM(lnI) + " is not a valid name")
+			ENDIF
+			IF PEMSTATUS(loParams, lcName, 5)
+				RETURN This.Fail("bad_argument", "the parameter " + lcName + " is twice")
+			ENDIF
+			lcVar = "tv" + TRANSFORM(lnI + 1)
+			IF TYPE(lcVar, 1) == "A"
+				RETURN This.Fail("bad_argument", "the value of " + lcName + " is an array; FoxRemote binds one value per parameter")
+			ENDIF
+			ADDPROPERTY(loParams, lcName, EVALUATE(lcVar))
+		ENDFOR
+		RETURN loParams
+	ENDFUNC
+
+	* tvName, trimmed, when it is the name of a parameter: a letter or _, then letters, digits or _.
+	* Anything else gives "".
+	PROTECTED FUNCTION PairName(tvName)
+		LOCAL lvName, lcName, lnI, lcCh
+		lvName = tvName
+		IF VARTYPE(lvName) # "C"
+			RETURN ""
+		ENDIF
+		lcName = ALLTRIM(lvName)
+		IF EMPTY(lcName) OR !(ISALPHA(LEFT(lcName, 1)) OR LEFT(lcName, 1) == "_")
+			RETURN ""
+		ENDIF
+		FOR lnI = 2 TO LEN(lcName)
+			lcCh = SUBSTR(lcName, lnI, 1)
+			IF !(ISALPHA(lcCh) OR ISDIGIT(lcCh) OR lcCh == "_")
+				RETURN ""
+			ENDIF
+		ENDFOR
+		RETURN lcName
+	ENDFUNC
+
+	* After tcSql: oParams, or name, value pairs (13 at most). .NULL. on failure.
+	FUNCTION Scalar(tcSql, tv1, tv2, tv3, tv4, tv5, tv6, tv7, tv8, tv9, tv10, tv11, tv12, tv13, ;
+		tv14, tv15, tv16, tv17, tv18, tv19, tv20, tv21, tv22, tv23, tv24, tv25, tv26)
+		LOCAL lvValue, laF[1], loParams
 		lvValue = .NULL.
-		IF This.Run(tcSql, "c_fr_scalar", toParams) >= 0 AND USED("c_fr_scalar")
+		IF PCOUNT() - 1 = 1 AND TYPE("tv1", 1) # "A" AND VARTYPE(tv1) $ "LX"
+			loParams = tv1
+		ELSE
+			loParams = This.PairsToParams(PCOUNT() - 1, @tv1, @tv2, @tv3, @tv4, @tv5, @tv6, @tv7, @tv8, @tv9, @tv10, @tv11, @tv12, @tv13, ;
+			@tv14, @tv15, @tv16, @tv17, @tv18, @tv19, @tv20, @tv21, @tv22, @tv23, @tv24, @tv25, @tv26)
+			IF VARTYPE(loParams) == "L"
+				RETURN .NULL.
+			ENDIF
+		ENDIF
+		IF This.Run(tcSql, "c_fr_scalar", loParams) >= 0 AND USED("c_fr_scalar")
 			This.FromServerText("c_fr_scalar")
 			SELECT c_fr_scalar
 			IF !EOF() AND FCOUNT() > 0
@@ -550,6 +658,11 @@ DEFINE CLASS RemoteDatabase AS Custom
 	* Returns the rows affected (0 when the driver does not say), or -1 on failure.
 	PROTECTED FUNCTION Run(tcSql, tcCursor, toParams)
 		LOCAL loFrP, lcSql, lnR, laCount[1], lcCursor, lnRows, lnI, loErr, llInTransaction
+		* First, because it only reads the caller's SQL: a ?variable that is not visible here would
+		* open VFP's "View Parameter" dialog in SQLEXEC().
+		IF !This.QuestionVariablesSeen(tcSql)
+			RETURN -1
+		ENDIF
 		IF This.nHandle < 1
 			IF !This.lAutoReconnect OR !This.Connect()
 				This.cLastSql = tcSql
@@ -562,6 +675,9 @@ DEFINE CLASS RemoteDatabase AS Custom
 		ENDIF
 		loFrP = This.PrepareParams(toParams)
 		lcSql = This.TranslateParams(tcSql, "loFrP")
+		IF !This.ParamsHaveValues(loFrP)
+			RETURN -1
+		ENDIF
 		lcCursor = IIF(EMPTY(tcCursor), "c_fr_noresult", tcCursor)
 		lnR = SQLEXEC(This.nHandle, lcSql, lcCursor, laCount)
 		This.tLastActivity = DATETIME()
@@ -608,6 +724,7 @@ DEFINE CLASS RemoteDatabase AS Custom
 	* :name -> ?<object>.name, outside quotes; '::' (a PostgreSQL cast) is left alone.
 	PROTECTED FUNCTION TranslateParams(tcSql, tcObject)
 		LOCAL lcOut, lnI, lnLen, lcCh, lcQuote, lnJ, lcName
+		This.cParamNames = ""
 		IF !(":" $ tcSql)
 			RETURN tcSql
 		ENDIF
@@ -638,6 +755,7 @@ DEFINE CLASS RemoteDatabase AS Custom
 				ENDDO
 				lcName = SUBSTR(tcSql, lnI + 1, lnJ - lnI - 1)
 				lcOut = lcOut + "?" + tcObject + "." + lcName
+				This.cParamNames = This.cParamNames + "," + lcName
 				lnI = lnJ
 			OTHERWISE
 				lcOut = lcOut + lcCh
@@ -647,16 +765,77 @@ DEFINE CLASS RemoteDatabase AS Custom
 		RETURN lcOut
 	ENDFUNC
 
+	* A ?variable in the caller's SQL (a ? and then a letter or _, then letters, digits, _ or ., outside
+	* quotes) reaches SQLEXEC() only if it is visible from here: a PRIVATE or PUBLIC of the caller is, a
+	* LOCAL is not, and then SQLEXEC() would open VFP's "View Parameter" dialog. TYPE() sees what
+	* SQLEXEC() sees; the locals have names no caller uses, so that they hide nothing. Nothing is sent.
+	PROTECTED FUNCTION QuestionVariablesSeen(tcSql)
+		LOCAL lnFrQvI, lnFrQvJ, lnFrQvLen, lcFrQvCh, lcFrQvQuote, lcFrQvId
+		IF VARTYPE(tcSql) # "C" OR !("?" $ tcSql)
+			RETURN .T.
+		ENDIF
+		lcFrQvQuote = ""
+		lnFrQvLen = LEN(tcSql)
+		FOR lnFrQvI = 1 TO lnFrQvLen
+			lcFrQvCh = SUBSTR(tcSql, lnFrQvI, 1)
+			DO CASE
+			CASE !EMPTY(lcFrQvQuote)
+				IF lcFrQvCh == lcFrQvQuote
+					lcFrQvQuote = ""
+				ENDIF
+			CASE INLIST(lcFrQvCh, "'", '"')
+				lcFrQvQuote = lcFrQvCh
+			CASE lcFrQvCh == "?" AND (ISALPHA(SUBSTR(tcSql, lnFrQvI + 1, 1)) OR SUBSTR(tcSql, lnFrQvI + 1, 1) == "_")
+				lnFrQvJ = lnFrQvI + 1
+				DO WHILE lnFrQvJ <= lnFrQvLen AND (ISALPHA(SUBSTR(tcSql, lnFrQvJ, 1)) OR ISDIGIT(SUBSTR(tcSql, lnFrQvJ, 1)) OR ;
+						INLIST(SUBSTR(tcSql, lnFrQvJ, 1), "_", "."))
+					lnFrQvJ = lnFrQvJ + 1
+				ENDDO
+				lcFrQvId = RTRIM(SUBSTR(tcSql, lnFrQvI + 1, lnFrQvJ - lnFrQvI - 1), 0, ".")
+				IF TYPE(lcFrQvId) == "U"
+					This.cLastSql = tcSql
+					RETURN This.Fail("bad_argument", "the variable " + lcFrQvId + " of ?" + lcFrQvId + ;
+						" is not visible to the library (a LOCAL is not): use :name with pairs or oParams")
+				ENDIF
+			ENDCASE
+		ENDFOR
+		RETURN .T.
+	ENDFUNC
+
+	* Every :name of the statement needs its property in oParams: without it SQLEXEC() opens VFP's
+	* "View Parameter" dialog, and a TRY does not catch it. Nothing is sent.
+	PROTECTED FUNCTION ParamsHaveValues(toParams)
+		LOCAL laN[1], lnI
+		IF EMPTY(This.cParamNames)
+			RETURN .T.
+		ENDIF
+		FOR lnI = 1 TO ALINES(laN, This.cParamNames, 5, ",")
+			IF VARTYPE(toParams) # "O" OR !PEMSTATUS(toParams, laN[lnI], 5)
+				RETURN This.Fail("bad_argument", "the parameter :" + laN[lnI] + " has no value in oParams")
+			ENDIF
+		ENDFOR
+		RETURN .T.
+	ENDFUNC
+
 	* The values as the driver has to receive them (UTF-8 for SQLite).
 	PROTECTED FUNCTION PrepareParams(toParams)
-		LOCAL loCopy, laM[1], lnI, lvValue
+		LOCAL loCopy, laM[1], lnI, lvValue, llValue, loEx
 		IF VARTYPE(toParams) # "O" OR !This.lUtf8Data
 			RETURN toParams
 		ENDIF
 		loCopy = CREATEOBJECT("Empty")
 		FOR lnI = 1 TO AMEMBERS(laM, toParams, 0)
-			lvValue = GETPEM(toParams, laM[lnI])
-			ADDPROPERTY(loCopy, laM[lnI], IIF(VARTYPE(lvValue) == "C", STRCONV(lvValue, 9), lvValue))
+			* A member that holds an object is not a value. Objects, Controls and Parent of a Custom
+			* are such members, and GETPEM() refuses them with error 1924.
+			TRY
+				lvValue = GETPEM(toParams, laM[lnI])
+				llValue = VARTYPE(lvValue) # "O"
+			CATCH TO loEx WHEN loEx.ErrorNo = 1924
+				llValue = .F.
+			ENDTRY
+			IF llValue
+				ADDPROPERTY(loCopy, laM[lnI], IIF(VARTYPE(lvValue) == "C", STRCONV(lvValue, 9), lvValue))
+			ENDIF
 		ENDFOR
 		RETURN loCopy
 	ENDFUNC
@@ -785,20 +964,14 @@ DEFINE CLASS RemoteDatabase AS Custom
 	* Updatable cursors
 	* ==================================================================== *
 	FUNCTION Open(tcTable, tcAlias, tcWhere, toParams, tcFields, tlReadOnly, tcGroup)
-		LOCAL lcAlias, lcKey, lcSql, loInfo, lcKeyName, lnErrors, lcLongSql
+		LOCAL lcAlias, lcKey, lcSql, loInfo, lnErrors, lcLongSql
 		IF EMPTY(tcTable)
 			RETURN This.Fail("bad_argument", "Open() needs a table")
 		ENDIF
 		lcAlias = IIF(EMPTY(tcAlias), CHRTRAN(tcTable, ".", "_"), tcAlias)
-		lcKeyName = This.CursorKey(lcAlias)
-		IF This.oCursors.GetKey(lcKeyName) > 0
-			IF USED(lcAlias)
-				RETURN This.Fail("alias_in_use", "the alias is already open: " + lcAlias)
-			ENDIF
-			This.oCursors.Remove(lcKeyName)
-		ENDIF
-		IF USED(lcAlias)
-			RETURN This.Fail("alias_in_use", "the alias is in use: " + lcAlias)
+		* Checked before the key, so a busy alias costs no trip to the server.
+		IF !This.AliasFree(lcAlias)
+			RETURN .F.
 		ENDIF
 		lcKey = ""
 		IF !tlReadOnly
@@ -806,34 +979,171 @@ DEFINE CLASS RemoteDatabase AS Custom
 			lcKey = This.GetPrimaryKey(tcTable)
 			IF EMPTY(lcKey)
 				IF This.nErrors = lnErrors
-					This.Fail("no_primary_key", "a table without a primary key can only be opened read-only: " + tcTable)
+					This.Fail("no_primary_key", "a table without a primary key can only be opened read-only: " + tcTable + ;
+						"; set cAutoKeyName before creating the table, or open it with lReadOnly")
 				ENDIF
 				RETURN .F.
 			ENDIF
 		ENDIF
 		lcSql = "SELECT " + IIF(EMPTY(tcFields), "*", tcFields) + " FROM " + tcTable + IIF(EMPTY(tcWhere), "", " WHERE " + tcWhere)
-		IF !This.Query(lcSql, lcAlias, toParams)
+		IF !This.OpenCursor(lcSql, lcAlias, toParams, tcTable, lcKey, "", tlReadOnly, tcGroup)
 			RETURN .F.
 		ENDIF
+		* The columns the engine cannot read as they are (SQL Server's VARCHAR(MAX)) are only known
+		* once the cursor is there: read it again with them cast, and keep that SELECT for Refresh().
 		lcLongSql = This.LongTextSelect(lcAlias, tcTable, tcWhere)
 		IF !EMPTY(lcLongSql)
-			lcSql = lcLongSql
-			IF !This.Query(lcSql, lcAlias, toParams)
+			loInfo = This.CursorInfo(lcAlias)
+			loInfo.cSql = lcLongSql
+			IF !This.Query(lcLongSql, lcAlias, toParams)
+				This.CloseInfo(loInfo)
+				RETURN .F.
+			ENDIF
+			This.MakeBuffered(loInfo)
+			SELECT (lcAlias)
+		ENDIF
+		RETURN .T.
+	ENDFUNC
+
+	* A cursor over a SELECT the caller wrote (joins, computed columns), buffered as Open() does.
+	* Without tcTable it is read-only and needs no key. With it, Save() writes to tcTable the columns
+	* of the cursor that are columns of tcTable; the key (tcKey, or the table's primary key) has to
+	* come in the SELECT with its own name. Selects the cursor.
+	FUNCTION OpenView(tcSql, tcAlias, toParams, tcTable, tcKey, tcGroup)
+		LOCAL lcAlias, lcKey, lnErrors, loInfo, lcMissing, lcUpdatable
+		IF VARTYPE(tcSql) # "C" OR !This.IsRead(tcSql)
+			RETURN This.Fail("bad_argument", "OpenView() needs a SELECT")
+		ENDIF
+		lcAlias = IIF(EMPTY(tcAlias), "c_fr_view", tcAlias)
+		IF EMPTY(tcTable)
+			RETURN This.OpenCursor(tcSql, lcAlias, toParams, "", "", "", .T., tcGroup)
+		ENDIF
+		IF !This.AliasFree(lcAlias)
+			RETURN .F.
+		ENDIF
+		lcKey = IIF(EMPTY(tcKey), "", ALLTRIM(tcKey))
+		IF EMPTY(lcKey)
+			lnErrors = This.nErrors
+			lcKey = This.GetPrimaryKey(tcTable)
+			IF EMPTY(lcKey)
+				IF This.nErrors = lnErrors
+					This.Fail("no_primary_key", "an updatable view needs a key, and " + tcTable + " has no primary key: pass cKey, " + ;
+						"or set cAutoKeyName before creating the table")
+				ENDIF
 				RETURN .F.
 			ENDIF
 		ENDIF
+		IF !This.OpenCursor(tcSql, lcAlias, toParams, tcTable, lcKey, "", .F., tcGroup)
+			RETURN .F.
+		ENDIF
+		loInfo = This.CursorInfo(lcAlias)
+		lcMissing = This.MissingColumn(lcKey, This.FieldList(lcAlias))
+		IF !EMPTY(lcMissing)
+			This.CloseInfo(loInfo)
+			RETURN This.Fail("no_primary_key", "the key column " + lcMissing + " of " + tcTable + " is not in the SELECT")
+		ENDIF
+		lcUpdatable = This.TableFields(lcAlias, tcTable)
+		IF ISNULL(lcUpdatable)
+			This.CloseInfo(loInfo)
+			RETURN .F.
+		ENDIF
+		lcMissing = This.MissingColumn(lcKey, lcUpdatable)
+		IF !EMPTY(lcMissing)
+			This.CloseInfo(loInfo)
+			RETURN This.Fail("no_primary_key", "the key column " + lcMissing + " is not a column of " + tcTable)
+		ENDIF
+		loInfo.cUpdatable = lcUpdatable
+		SELECT (lcAlias)
+		RETURN .T.
+	ENDFUNC
+
+	* The fields of the cursor, separated by commas.
+	PROTECTED FUNCTION FieldList(tcAlias)
+		LOCAL laF[1], lnI, lcList
+		lcList = ""
+		FOR lnI = 1 TO AFIELDS(laF, tcAlias)
+			lcList = lcList + IIF(EMPTY(lcList), "", ",") + laF[lnI, 1]
+		ENDFOR
+		RETURN lcList
+	ENDFUNC
+
+	* The fields of the cursor that are columns of tcTable, by name and without case; .NULL. when
+	* the columns of tcTable cannot be read.
+	PROTECTED FUNCTION TableFields(tcAlias, tcTable)
+		LOCAL lcColumns, laF[1], lnI, lcList
+		IF !This.GetColumns(tcTable, "c_fr_viewcols")
+			RETURN .NULL.
+		ENDIF
+		lcColumns = ","
+		SELECT c_fr_viewcols
+		SCAN
+			lcColumns = lcColumns + UPPER(ALLTRIM(name)) + ","
+		ENDSCAN
+		USE IN c_fr_viewcols
+		lcList = ""
+		FOR lnI = 1 TO AFIELDS(laF, tcAlias)
+			IF ("," + UPPER(laF[lnI, 1]) + ",") $ lcColumns
+				lcList = lcList + IIF(EMPTY(lcList), "", ",") + laF[lnI, 1]
+			ENDIF
+		ENDFOR
+		SELECT (tcAlias)
+		RETURN lcList
+	ENDFUNC
+
+	* The first column of tcColumns that is not in the list tcIn; "" when all are.
+	PROTECTED FUNCTION MissingColumn(tcColumns, tcIn)
+		LOCAL laC[1], lnI
+		FOR lnI = 1 TO ALINES(laC, tcColumns, 1, ",")
+			IF !(("," + UPPER(laC[lnI]) + ",") $ ("," + UPPER(tcIn) + ","))
+				RETURN laC[lnI]
+			ENDIF
+		ENDFOR
+		RETURN ""
+	ENDFUNC
+
+	* What Open() and OpenView() share once the SELECT is written: run it into the alias, register
+	* the cursor and buffer it. tcUpdatable lists the columns Save() may write ("" = all of them).
+	PROTECTED FUNCTION OpenCursor(tcSql, tcAlias, toParams, tcTable, tcKey, tcUpdatable, tlReadOnly, tcGroup)
+		LOCAL loInfo
+		IF !This.AliasFree(tcAlias)
+			RETURN .F.
+		ENDIF
+		IF !This.Query(tcSql, tcAlias, toParams)
+			RETURN .F.
+		ENDIF
+		* A SELECT that returns nothing (SELECT ... INTO) leaves no cursor; one with no rows does.
+		IF !USED(tcAlias)
+			RETURN This.Fail("bad_argument", "the statement returned no result set: " + tcAlias)
+		ENDIF
 		loInfo = CREATEOBJECT("Empty")
-		ADDPROPERTY(loInfo, "cAlias", lcAlias)
+		ADDPROPERTY(loInfo, "cAlias", tcAlias)
 		ADDPROPERTY(loInfo, "cTable", tcTable)
-		ADDPROPERTY(loInfo, "cKey", lcKey)
-		ADDPROPERTY(loInfo, "cSql", lcSql)
+		ADDPROPERTY(loInfo, "cKey", tcKey)
+		ADDPROPERTY(loInfo, "cUpdatable", tcUpdatable)
+		ADDPROPERTY(loInfo, "cSql", tcSql)
 		ADDPROPERTY(loInfo, "oParams", toParams)
 		ADDPROPERTY(loInfo, "lReadOnly", tlReadOnly)
 		ADDPROPERTY(loInfo, "cGroup", LOWER(IIF(EMPTY(tcGroup), "", tcGroup)))
 		ADDPROPERTY(loInfo, "nSession", SET("DATASESSION"))
-		This.oCursors.Add(loInfo, lcKeyName)
+		This.oCursors.Add(loInfo, This.CursorKey(tcAlias))
 		This.MakeBuffered(loInfo)
-		SELECT (lcAlias)
+		SELECT (tcAlias)
+		RETURN .T.
+	ENDFUNC
+
+	* Fails with alias_in_use when the alias is open; forgets a registered cursor the user closed.
+	PROTECTED FUNCTION AliasFree(tcAlias)
+		LOCAL lcKeyName
+		lcKeyName = This.CursorKey(tcAlias)
+		IF This.oCursors.GetKey(lcKeyName) > 0
+			IF USED(tcAlias)
+				RETURN This.Fail("alias_in_use", "the alias is already open: " + tcAlias)
+			ENDIF
+			This.oCursors.Remove(lcKeyName)
+		ENDIF
+		IF USED(tcAlias)
+			RETURN This.Fail("alias_in_use", "the alias is in use: " + tcAlias)
+		ENDIF
 		RETURN .T.
 	ENDFUNC
 
@@ -1110,7 +1420,7 @@ DEFINE CLASS RemoteDatabase AS Custom
 				REPLACE (loEntry.cField) WITH loEntry.vOld IN (loEntry.cAlias)
 			ENDIF
 		ENDFOR
-		IF !INLIST(This.cLastErrorCode, "row_not_found", "row_changed", "connection_lost")
+		IF !INLIST(This.cLastErrorCode, "row_not_found", "row_changed", "connection_lost", "read_only")
 			This.cLastErrorCode = "save_failed"
 		ENDIF
 		RETURN .F.
@@ -1139,6 +1449,9 @@ DEFINE CLASS RemoteDatabase AS Custom
 			ENDIF
 			IF This.IsKeyField(lcField, lcKey) AND EMPTY(lvValue)
 				LOOP
+			ENDIF
+			IF !This.IsUpdatable(toInfo, lcField)
+				RETURN This.Fail("read_only", "the column " + LOWER(lcField) + " is not in " + toInfo.cTable + " and cannot be saved")
 			ENDIF
 			lnN = lnN + 1
 			ADDPROPERTY(loP, "p" + TRANSFORM(lnN), This.ToServerValue(lvValue, taF[lnI, 2], taF[lnI, 5]))
@@ -1219,6 +1532,9 @@ DEFINE CLASS RemoteDatabase AS Custom
 				LOOP
 			ENDIF
 			lcField = taF[lnI, 1]
+			IF !This.IsUpdatable(toInfo, lcField)
+				RETURN This.Fail("read_only", "the column " + LOWER(lcField) + " is not in " + toInfo.cTable + " and cannot be saved")
+			ENDIF
 			lnN = lnN + 1
 			ADDPROPERTY(loP, "p" + TRANSFORM(lnN), This.ToServerValue(EVALUATE(toInfo.cAlias + "." + lcField), taF[lnI, 2], taF[lnI, 5]))
 			lcSet = lcSet + IIF(EMPTY(lcSet), "", ", ") + This.ColumnName(lcField) + " = :p" + TRANSFORM(lnN)
@@ -1274,7 +1590,7 @@ DEFINE CLASS RemoteDatabase AS Custom
 				LOOP
 			ENDIF
 			lcField = taF[lnI, 1]
-			IF This.IsKeyField(lcField, toInfo.cKey)
+			IF This.IsKeyField(lcField, toInfo.cKey) OR !This.IsUpdatable(toInfo, lcField)
 				LOOP
 			ENDIF
 			lvOld = This.ToServerValue(OLDVAL(lcField, toInfo.cAlias), taF[lnI, 2], taF[lnI, 5])
@@ -1325,6 +1641,11 @@ DEFINE CLASS RemoteDatabase AS Custom
 			("," + UPPER(tcField) + ",") $ ("," + UPPER(STRTRAN(tcKey, " ", "")) + ",")
 	ENDFUNC
 
+	* Whether Save() may write the column: all of them when the cursor names none (Open()).
+	PROTECTED FUNCTION IsUpdatable(toInfo, tcField)
+		RETURN EMPTY(toInfo.cUpdatable) OR This.IsKeyField(tcField, toInfo.cUpdatable)
+	ENDFUNC
+
 	* A value as it has to travel: blanks trimmed, empty dates as NULL (or the engine's minimum).
 	PROTECTED FUNCTION ToServerValue(tvValue, tcType, tlNullable)
 		DO CASE
@@ -1351,7 +1672,7 @@ DEFINE CLASS RemoteDatabase AS Custom
 		RETURN IIF(This.cNameCase == "asis", LOWER(ALLTRIM(tcName)), This.NaturalName(tcName))
 	ENDFUNC
 
-	* D11: a name as the engine writes it when it is not quoted.
+	* A name as the engine writes it when it is not quoted.
 	FUNCTION NaturalName(tcName)
 		DO CASE
 		CASE This.cNameCase == "upper"
@@ -1431,6 +1752,58 @@ DEFINE CLASS RemoteDatabase AS Custom
 			INSERT INTO (lcCursor) (name) VALUES (lcName)
 		ENDSCAN
 		USE IN c_fr_tbl_raw
+		SELECT (lcCursor)
+		GO TOP
+		RETURN .T.
+	ENDFUNC
+
+	* A cursor with one row per database the login can open: name. On a file engine (SQLite,
+	* Firebird) the database is the file, so the one row is cDatabase.
+	FUNCTION GetDatabases(tcCursor)
+		LOCAL lcCursor, lcName
+		lcCursor = IIF(EMPTY(tcCursor), "c_fr_databases", tcCursor)
+		IF This.lFileDatabase
+			IF This.nHandle < 1 AND (!This.lAutoReconnect OR !This.Connect())
+				RETURN This.Fail("not_connected", "not connected")
+			ENDIF
+			CREATE CURSOR (lcCursor) (name C(128))
+			INSERT INTO (lcCursor) (name) VALUES (This.cDatabase)
+			GO TOP
+			RETURN .T.
+		ENDIF
+		IF !This.Query(This.DatabasesSql(), "c_fr_db_raw")
+			RETURN .F.
+		ENDIF
+		CREATE CURSOR (lcCursor) (name C(128))
+		SELECT c_fr_db_raw
+		SCAN
+			* Into a variable first: inside INSERT ... VALUES, EVALUATE() of a field name reads the
+			* destination cursor. Some drivers give the name as a memo, or padded with CHR(0).
+			lcName = ALLTRIM(STRTRAN(TRANSFORM(EVALUATE(FIELD(1))), CHR(0), ""))
+			INSERT INTO (lcCursor) (name) VALUES (lcName)
+		ENDSCAN
+		USE IN c_fr_db_raw
+		SELECT (lcCursor)
+		GO TOP
+		RETURN .T.
+	ENDFUNC
+
+	* A cursor with one row per table and view of the current database: name, type ("table" or
+	* "view"). GetTables() keeps giving the tables alone.
+	FUNCTION GetObjects(tcCursor)
+		LOCAL lcCursor, lcName, lcType
+		lcCursor = IIF(EMPTY(tcCursor), "c_fr_objects", tcCursor)
+		IF !This.Query(This.ObjectsSql(), "c_fr_obj_raw")
+			RETURN .F.
+		ENDIF
+		CREATE CURSOR (lcCursor) (name C(128), type C(5))
+		SELECT c_fr_obj_raw
+		SCAN
+			lcName = ALLTRIM(STRTRAN(TRANSFORM(EVALUATE(FIELD(1))), CHR(0), ""))
+			lcType = LOWER(ALLTRIM(STRTRAN(TRANSFORM(EVALUATE(FIELD(2))), CHR(0), "")))
+			INSERT INTO (lcCursor) (name, type) VALUES (lcName, lcType)
+		ENDSCAN
+		USE IN c_fr_obj_raw
 		SELECT (lcCursor)
 		GO TOP
 		RETURN .T.
@@ -1854,6 +2227,17 @@ DEFINE CLASS RemoteDatabase AS Custom
 		RETURN ""
 	ENDFUNC
 
+	* The databases the login can open (one column, the name); "" on a file engine.
+	PROTECTED FUNCTION DatabasesSql
+		RETURN ""
+	ENDFUNC
+
+	* The tables and views of the current database: two columns, the name and 'table' or 'view'.
+	PROTECTED FUNCTION ObjectsSql
+		RETURN ""
+	ENDFUNC
+
+
 	PROTECTED FUNCTION ColumnNamesSql(tcTable)
 		RETURN ""
 	ENDFUNC
@@ -1925,7 +2309,7 @@ DEFINE CLASS RemoteSqlServer AS RemoteDatabase
 	ENDFUNC
 
 	* With ODBC Driver 17/18, VFP types VARCHAR(MAX) and NVARCHAR(MAX) as C(0): whatever is written
-	* there is cut to nothing (measured 04-10). Read them as TEXT, which VFP takes as a memo.
+	* there is cut to nothing. Read them as TEXT, which VFP takes as a memo.
 	PROTECTED FUNCTION LongTextSelect(tcAlias, tcTable, tcWhere)
 		LOCAL laF[1], lnI, lnN, lcCols, llLong
 		lnN = AFIELDS(laF, tcAlias)
@@ -1961,6 +2345,15 @@ DEFINE CLASS RemoteSqlServer AS RemoteDatabase
 
 	PROTECTED FUNCTION TablesSql
 		RETURN "SELECT CAST(TABLE_NAME AS varchar(128)) AS name FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE' ORDER BY TABLE_NAME"
+	ENDFUNC
+
+	PROTECTED FUNCTION DatabasesSql
+		RETURN "SELECT CAST(name AS varchar(128)) AS name FROM sys.databases WHERE HAS_DBACCESS(name) = 1 ORDER BY name"
+	ENDFUNC
+
+	PROTECTED FUNCTION ObjectsSql
+		RETURN "SELECT CAST(TABLE_NAME AS varchar(128)) AS name, CAST(CASE TABLE_TYPE WHEN 'VIEW' THEN 'view' ELSE 'table' END AS varchar(5)) AS type " + ;
+			"FROM INFORMATION_SCHEMA.TABLES ORDER BY TABLE_NAME"
 	ENDFUNC
 
 	PROTECTED FUNCTION ColumnNamesSql(tcTable)
@@ -2068,6 +2461,15 @@ DEFINE CLASS RemoteMySql AS RemoteDatabase
 		RETURN "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_TYPE = 'BASE TABLE' ORDER BY TABLE_NAME"
 	ENDFUNC
 
+	PROTECTED FUNCTION DatabasesSql
+		RETURN "SELECT SCHEMA_NAME FROM information_schema.SCHEMATA ORDER BY SCHEMA_NAME"
+	ENDFUNC
+
+	PROTECTED FUNCTION ObjectsSql
+		RETURN "SELECT TABLE_NAME, CASE TABLE_TYPE WHEN 'VIEW' THEN 'view' ELSE 'table' END FROM information_schema.TABLES " + ;
+			"WHERE TABLE_SCHEMA = DATABASE() ORDER BY TABLE_NAME"
+	ENDFUNC
+
 	PROTECTED FUNCTION ColumnNamesSql(tcTable)
 		RETURN "SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '" + ;
 			STRTRAN(tcTable, "'", "''") + "' ORDER BY ORDINAL_POSITION"
@@ -2151,6 +2553,16 @@ DEFINE CLASS RemotePostgreSql AS RemoteDatabase
 		RETURN "SELECT table_name FROM information_schema.tables WHERE table_schema = current_schema() AND table_type = 'BASE TABLE' ORDER BY table_name"
 	ENDFUNC
 
+	* Without the three conditions template0 and template1 come too, and they cannot be opened.
+	PROTECTED FUNCTION DatabasesSql
+		RETURN "SELECT datname FROM pg_database WHERE NOT datistemplate AND datallowconn AND has_database_privilege(datname, 'CONNECT') ORDER BY datname"
+	ENDFUNC
+
+	PROTECTED FUNCTION ObjectsSql
+		RETURN "SELECT table_name, CASE table_type WHEN 'VIEW' THEN 'view' ELSE 'table' END FROM information_schema.tables " + ;
+			"WHERE table_schema = current_schema() AND table_type IN ('BASE TABLE', 'VIEW') ORDER BY table_name"
+	ENDFUNC
+
 	PROTECTED FUNCTION ColumnNamesSql(tcTable)
 		RETURN "SELECT attname FROM pg_attribute WHERE attrelid = to_regclass('" + STRTRAN(tcTable, "'", "''") + "') AND attnum > 0 " + ;
 			"AND NOT attisdropped ORDER BY attnum"
@@ -2215,7 +2627,7 @@ DEFINE CLASS RemoteFirebird AS RemoteDatabase
 
 	* Firebird creates a database from a connection to another one: cDatabase has to name an
 	* existing database (or alias) of the same server. A plain SQLEXEC on a short connection: with a
-	* cursor and a row count the driver answers "Function sequence error" (measured 04-10).
+	* cursor and a row count the driver answers "Function sequence error".
 	PROTECTED FUNCTION CreateDatabaseNow(tcDatabase)
 		LOCAL lnH, lnR
 		lnH = This.OpenHandle(This.BuildConnectionString(This.cDatabase))
@@ -2243,6 +2655,11 @@ DEFINE CLASS RemoteFirebird AS RemoteDatabase
 
 	PROTECTED FUNCTION TablesSql
 		RETURN "SELECT TRIM(RDB$RELATION_NAME) FROM RDB$RELATIONS WHERE COALESCE(RDB$SYSTEM_FLAG, 0) = 0 AND RDB$VIEW_BLR IS NULL ORDER BY 1"
+	ENDFUNC
+
+	PROTECTED FUNCTION ObjectsSql
+		RETURN "SELECT TRIM(RDB$RELATION_NAME), CASE WHEN RDB$VIEW_BLR IS NULL THEN 'table' ELSE 'view' END FROM RDB$RELATIONS " + ;
+			"WHERE COALESCE(RDB$SYSTEM_FLAG, 0) = 0 ORDER BY 1"
 	ENDFUNC
 
 	PROTECTED FUNCTION ColumnNamesSql(tcTable)
@@ -2308,7 +2725,7 @@ DEFINE CLASS RemoteSqlite AS RemoteDatabase
 	ENDFUNC
 
 	* This driver does not read DATABASE={...}: a path with ';' (or '{', '}', '=') goes as a
-	* file: URI, percent-encoded, which it hands to SQLite as it is (measured 04-10).
+	* file: URI, percent-encoded, which it hands to SQLite as it is.
 	PROTECTED FUNCTION FileName(tcDatabase)
 		LOCAL lcUri
 		IF !(";" $ tcDatabase OR "{" $ tcDatabase OR "}" $ tcDatabase OR "=" $ tcDatabase)
@@ -2347,6 +2764,10 @@ DEFINE CLASS RemoteSqlite AS RemoteDatabase
 
 	PROTECTED FUNCTION TablesSql
 		RETURN "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name"
+	ENDFUNC
+
+	PROTECTED FUNCTION ObjectsSql
+		RETURN "SELECT name, type FROM sqlite_master WHERE type IN ('table', 'view') AND name NOT LIKE 'sqlite_%' ORDER BY name"
 	ENDFUNC
 
 	PROTECTED FUNCTION ColumnNamesSql(tcTable)

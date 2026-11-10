@@ -159,8 +159,8 @@ DEFINE CLASS TestRemoteSql AS Custom
 		ENDFOR
 		lcExpected = "ATTACH,BEGINTRANSACTION,CLEARERRORS,CLOSE,CLOSEALL,CLOSEGROUP,COLUMNEXISTS,"
 		lcExpected = lcExpected + "COMMIT,CONNECT,CREATEDATABASE,CREATETABLE,CREATETABLEFROMCURSOR,DATABASEEXISTS,"
-		lcExpected = lcExpected + "DISCARD,DISCONNECT,EXECUTE,GENERATESCRIPT,GETCOLUMNS,GETPRIMARYKEY,GETTABLES,"
-		lcExpected = lcExpected + "HASCHANGES,LASTID,MIGRATE,NATURALNAME,NEWGUID,NEWTABLEDEF,NEXTNUMBER,OPEN,PING,"
+		lcExpected = lcExpected + "DISCARD,DISCONNECT,EXECUTE,GENERATESCRIPT,GETCOLUMNS,GETDATABASES,GETOBJECTS,GETPRIMARYKEY,GETTABLES,"
+		lcExpected = lcExpected + "HASCHANGES,LASTID,MIGRATE,NATURALNAME,NEWGUID,NEWTABLEDEF,NEXTNUMBER,OPEN,OPENVIEW,PARAMS,PING,"
 		lcExpected = lcExpected + "QUERY,REFRESH,ROLLBACK,SAVE,SAVEGROUP,SCALAR,SERVERDATE,SERVERVERSION,"
 		lcExpected = lcExpected + "TABLEEXISTS,TABLESCRIPT,USEDATABASE"
 		__assert.Equal(lcExpected, lcActual)
@@ -591,7 +591,7 @@ DEFINE CLASS TestRemoteSql AS Custom
 	PROCEDURE TestDefaults() HELP [Fact, Trait("Category", "Offline")]
 		LOCAL loDb
 		loDb = CREATEOBJECT("RemotePostgreSql")
-		__assert.Equal("1.0.1", loDb.cVersion)
+		__assert.Equal("1.2.0", loDb.cVersion)
 		__assert.Equal(0, loDb.nErrors)
 		__assert.False(loDb.lStrict)
 		__assert.Equal("null", loDb.cEmptyDateMode)
@@ -690,6 +690,144 @@ DEFINE CLASS TestRemoteSql AS Custom
 	ENDPROC
 
 	* ======================================================================== *
+	* Params() and the name, value pairs of Query(), Execute() and Scalar(), without a server
+	* ======================================================================== *
+	PROCEDURE TestParamsKeepsTheSevenTypes() HELP [Fact, Trait("Category", "Params")]
+		LOCAL loDb, loP
+		loDb = CREATEOBJECT("RemoteSqlite")
+		loP = loDb.Params("city", "Logroño", "qty", 12.5, "born", {^2026-11-02}, "seen", {^2026-11-02 10:30:00}, ;
+			"active", .T., "price", NTOM(12.34), "notes", .NULL.)
+		__assert.Equal("O", VARTYPE(loP))
+		__assert.Equal("Logroño", loP.city)
+		__assert.Equal(12.5, loP.qty)
+		__assert.Equal({^2026-11-02}, loP.born)
+		__assert.Equal({^2026-11-02 10:30:00}, loP.seen)
+		__assert.True(loP.active)
+		__assert.Equal("Y", VARTYPE(loP.price))
+		__assert.Equal(NTOM(12.34), loP.price)
+		__assert.True(ISNULL(loP.notes))
+		__assert.Equal(0, loDb.nErrors)
+	ENDPROC
+
+	PROCEDURE TestParamsWithAnOddCountFails() HELP [Fact, Trait("Category", "Params")]
+		LOCAL loDb
+		loDb = CREATEOBJECT("RemoteSqlite")
+		__assert.True(ISNULL(loDb.Params("city", "Lima", "town")))
+		__assert.Equal("bad_argument", loDb.cLastErrorCode)
+		__assert.Equal("the parameter town has no value: the arguments go in pairs, name and value", loDb.cLastError)
+	ENDPROC
+
+	PROCEDURE TestParamsWithABadNameFails() HELP [Fact, Trait("Category", "Params")]
+		LOCAL loDb
+		loDb = CREATEOBJECT("RemoteSqlite")
+		__assert.True(ISNULL(loDb.Params(":city", "Lima")))
+		__assert.Equal("bad_argument", loDb.cLastErrorCode)
+		__assert.Equal("the parameter name at position 1 is not a valid name", loDb.cLastError)
+		__assert.True(ISNULL(loDb.Params("city", "Lima", 7, "x")))
+		__assert.Equal("the parameter name at position 3 is not a valid name", loDb.cLastError)
+		__assert.True(ISNULL(loDb.Params("city", "Lima", "my city", "x")))
+		__assert.Equal("the parameter name at position 3 is not a valid name", loDb.cLastError)
+		__assert.True(ISNULL(loDb.Params("", "x")))
+		__assert.Equal("the parameter name at position 1 is not a valid name", loDb.cLastError)
+		__assert.True(ISNULL(loDb.Params("1city", "x")))
+		__assert.Equal("the parameter name at position 1 is not a valid name", loDb.cLastError)
+		__assert.Equal("O", VARTYPE(loDb.Params("_city2", "x")))
+	ENDPROC
+
+	PROCEDURE TestParamsWithANameTwiceFails() HELP [Fact, Trait("Category", "Params")]
+		LOCAL loDb
+		loDb = CREATEOBJECT("RemoteSqlite")
+		__assert.True(ISNULL(loDb.Params("city", "Lima", "CITY", "Oslo")))
+		__assert.Equal("bad_argument", loDb.cLastErrorCode)
+		__assert.Equal("the parameter CITY is twice", loDb.cLastError)
+	ENDPROC
+
+	PROCEDURE TestParamsWithAnArrayFails() HELP [Fact, Trait("Category", "Params")]
+		LOCAL loDb, laIds[2]
+		laIds[1] = 1
+		laIds[2] = 2
+		loDb = CREATEOBJECT("RemoteSqlite")
+		__assert.True(ISNULL(loDb.Params("ids", @laIds)))
+		__assert.Equal("bad_argument", loDb.cLastErrorCode)
+		__assert.Equal("the value of ids is an array; FoxRemote binds one value per parameter", loDb.cLastError)
+	ENDPROC
+
+	PROCEDURE TestParamsOfAnObjectThenMoreFails() HELP [Fact, Trait("Category", "Params")]
+		LOCAL loDb, loP, loQ
+		loDb = CREATEOBJECT("RemoteSqlite")
+		loP = CREATEOBJECT("Empty")
+		__assert.True(ISNULL(loDb.Params(loP, "city", "Lima")))
+		__assert.Equal("bad_argument", loDb.cLastErrorCode)
+		__assert.Equal("after the object of parameters there is nothing else: either an object, or name and value pairs", loDb.cLastError)
+		* The object alone is the object of parameters, the same one.
+		ADDPROPERTY(loP, "mark", 1)
+		loQ = loDb.Params(loP)
+		loP.mark = 2
+		__assert.Equal(2, loQ.mark)
+	ENDPROC
+
+	* A malformed pair fails before the connection is even looked at: bad_argument, not not_connected.
+	* The old calls go the old way: a .F. or .NULL. where oParams goes is no parameters at all.
+	PROCEDURE TestMalformedPairsFailBeforeTheServer() HELP [Fact, Trait("Category", "Params")]
+		LOCAL loDb
+		loDb = CREATEOBJECT("RemoteSqlite")
+		__assert.False(loDb.Query("SELECT 1", "c_frp", "city"))
+		__assert.Equal("bad_argument", loDb.cLastErrorCode)
+		__assert.Equal(-1, loDb.Execute("DELETE FROM t WHERE city = :city", "city", "Lima", "city", "Oslo"))
+		__assert.Equal("the parameter city is twice", loDb.cLastError)
+		__assert.True(ISNULL(loDb.Scalar("SELECT 1", 5, "x")))
+		__assert.Equal("the parameter name at position 1 is not a valid name", loDb.cLastError)
+		__assert.False(loDb.Query("SELECT 1", "c_frp", .F.))
+		__assert.Equal("not_connected", loDb.cLastErrorCode)
+		__assert.False(loDb.Query("SELECT 1", "c_frp", .NULL.))
+		__assert.Equal("not_connected", loDb.cLastErrorCode)
+		__assert.Equal(-1, loDb.Execute("SELECT 1", "city", "Lima"))
+		__assert.Equal("not_connected", loDb.cLastErrorCode)
+		__assert.False(USED("c_frp"))
+	ENDPROC
+
+	* A ?variable that the library cannot see (a LOCAL of the caller) fails with bad_argument before
+	* the connection is looked at; a PRIVATE of the caller is seen and goes on (here, to not_connected);
+	* a ? inside quotes is not a variable.
+	PROCEDURE TestAQuestionMarkVariableFails() HELP [Fact, Trait("Category", "Params")]
+		LOCAL loDb, lcX, lcMessage
+		PRIVATE pcX
+		lcX = "Oslo"
+		pcX = "Oslo"
+		lcMessage = "the variable lcX of ?lcX is not visible to the library (a LOCAL is not): use :name with pairs or oParams"
+		loDb = CREATEOBJECT("RemoteSqlite")
+		__assert.False(loDb.Query("SELECT name FROM customers WHERE city = ?lcX", "c_frq"))
+		__assert.Equal("bad_argument", loDb.cLastErrorCode)
+		__assert.Equal(lcMessage, loDb.cLastError)
+		__assert.Equal(-1, loDb.Execute("DELETE FROM customers WHERE city = ?lcX"))
+		__assert.Equal("bad_argument", loDb.cLastErrorCode)
+		__assert.Equal(lcMessage, loDb.cLastError)
+		__assert.True(ISNULL(loDb.Scalar("SELECT COUNT(*) FROM customers WHERE city = ?lcX")))
+		__assert.Equal("bad_argument", loDb.cLastErrorCode)
+		__assert.Equal(lcMessage, loDb.cLastError)
+		__assert.False(loDb.Query("SELECT name FROM customers WHERE city = ?pcX", "c_frq"))
+		__assert.Equal("not_connected", loDb.cLastErrorCode)
+		__assert.False(loDb.Query("SELECT name FROM customers WHERE note = 'why?'", "c_frq"))
+		__assert.Equal("not_connected", loDb.cLastErrorCode)
+		__assert.False(loDb.Query('SELECT name FROM customers WHERE note = "?x"', "c_frq"))
+		__assert.Equal("not_connected", loDb.cLastErrorCode)
+		__assert.False(USED("c_frq"))
+	ENDPROC
+
+	* The two refusals of a table without a primary key say what to do about it.
+	PROCEDURE TestNoPrimaryKeySaysTheWayOut() HELP [Fact, Trait("Category", "Offline")]
+		LOCAL loDb
+		loDb = CREATEOBJECT("XNoKeySqlite")
+		__assert.False(loDb.Open("items"))
+		__assert.Equal("no_primary_key", loDb.cLastErrorCode)
+		__assert.Equal("a table without a primary key can only be opened read-only: items; set cAutoKeyName before creating the table, or open it with lReadOnly", loDb.cLastError)
+		__assert.False(loDb.OpenView("SELECT code FROM items", "c_frv", .NULL., "items"))
+		__assert.Equal("no_primary_key", loDb.cLastErrorCode)
+		__assert.Equal("an updatable view needs a key, and items has no primary key: pass cKey, or set cAutoKeyName before creating the table", loDb.cLastError)
+		__assert.False(USED("items") OR USED("c_frv"))
+	ENDPROC
+
+	* ======================================================================== *
 	* GenerateScript: the SQL of a .dbf, without a server
 	* ======================================================================== *
 	PROCEDURE TestGenerateScriptOfADbf() HELP [Fact, Trait("Category", "Migration")]
@@ -746,6 +884,13 @@ ENDDEFINE
 * ======================================================================== *
 * Test subclasses: Call() reaches the protected members from inside the class.
 * ======================================================================== *
+
+* A table that has no primary key, without a server: GetPrimaryKey() finds none and fails nothing.
+DEFINE CLASS XNoKeySqlite AS RemoteSqlite
+	FUNCTION GetPrimaryKey(tcTable)
+		RETURN ""
+	ENDFUNC
+ENDDEFINE
 
 DEFINE CLASS XSqlServer AS RemoteSqlServer
 	FUNCTION Call(tcMethod, tv1, tv2, tv3, tv4)

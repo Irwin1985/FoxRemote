@@ -287,6 +287,17 @@ DEFINE CLASS FrEngine AS Custom
 		RETURN This.RawRun("INSERT INTO " + tcTable + " (name, city) VALUES ('" + tcName + "', '" + tcCity + "')")
 	ENDFUNC
 
+	* Orders of the customers of tcCustomersTable (the view tests join the two): id, customer_id, status.
+	* Drop it before the customers: customer_id refers to them.
+	FUNCTION CreateOrders(tcTable, tcCustomersTable)
+		RETURN This.RawRun("CREATE TABLE " + tcTable + " (id " + This.AutoIdType() + ", customer_id INTEGER REFERENCES " + ;
+			tcCustomersTable + " (id), status VARCHAR(10))")
+	ENDFUNC
+
+	FUNCTION InsertOrder(tcTable, tnCustomerId, tcStatus)
+		RETURN This.RawRun("INSERT INTO " + tcTable + " (customer_id, status) VALUES (" + TRANSFORM(tnCustomerId) + ", '" + tcStatus + "')")
+	ENDFUNC
+
 	FUNCTION MaxId(tcTable)
 		RETURN FrNum(This.RawScalar("SELECT MAX(id) FROM " + tcTable))
 	ENDFUNC
