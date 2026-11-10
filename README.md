@@ -157,7 +157,7 @@ properties. Nothing is ever shown on screen.
 | `nIdleCheckSeconds` | `30` | With `lAutoReconnect`, a connection idle this long is checked before the next statement; 0 checks before every one |
 | `nReconnects` | `0` | How many times the connection was opened again, read-only |
 | `nHandle` | `0` | The ODBC handle, read-only; 0 when not connected |
-| `cEngine`, `cVersion` | | `"sqlserver"`, `"mysql"`, ...; and the library version, `"1.2.0"` |
+| `cEngine`, `cVersion` | | `"sqlserver"`, `"mysql"`, ...; and the library version, `"1.2.1"` |
 
 ### Data properties
 
@@ -705,6 +705,16 @@ ENDTRY
   `SQLEXEC()` on `nHandle` arrives in UTF-8.
 
 ## Changes
+
+### 1.2.1
+
+- `GetColumns()` and `GetPrimaryKey()` read a table whose name was created between quotes in the
+  case the engine does not write by itself: a lowercase table in Firebird, an uppercase one in
+  PostgreSQL, or a name with a space. When a table or view has exactly the name you pass, case
+  included, that one is read; when none has, the name goes as before, so a table created without
+  quotes is found in any case. A name already in the case the engine writes is not looked up.
+- `Open()` of a table whose name you pass between the quotes of the engine finds its primary key,
+  so the cursor can be saved.
 
 ### 1.2.0
 

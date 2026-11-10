@@ -2096,4 +2096,115 @@ DEFINE CLASS TestRemoteIntegration AS Custom
 		ENDFOR
 		__assert.True(EMPTY(lcFound), "user interface in " + JUSTFNAME(FrLibrarySource()) + ":" + CHR(13) + CHR(10) + lcFound)
 	ENDPROC
+	* A table whose name is quoted in the case the engine does not write by itself (lower case in
+	* Firebird, upper case in PostgreSQL): GetColumns gives its columns and GetPrimaryKey its key, of
+	* one column and of two.
+	PROCEDURE TestATableQuotedInTheOtherCaseGivesItsColumnsAndKey() HELP [Fact, Trait("Category", "Metadata"), Timeout(180000)]
+		This.OnEachEngine("QuotedInTheOtherCase", "firebird,postgresql")
+	ENDPROC
+
+	PROCEDURE QuotedInTheOtherCase(toE)
+		LOCAL lcT1, lcT2, loDb
+		lcT1 = This.OtherCase(toE, toE.NewName("frq"))
+		lcT2 = This.OtherCase(toE, toE.NewName("frq"))
+		This.Check(toE.RawRun("CREATE TABLE " + ["] + lcT1 + ["] + " (id INTEGER NOT NULL PRIMARY KEY, nm VARCHAR(10))"), toE.cLastError)
+		This.Check(toE.RawRun("CREATE TABLE " + ["] + lcT2 + ["] + " (a INTEGER NOT NULL, b INTEGER NOT NULL, v VARCHAR(10), PRIMARY KEY (a, b))"), toE.cLastError)
+		loDb = This.Connected(toE)
+		This.Check(loDb.GetColumns(lcT1, "c_frq") AND This.ColCount("c_frq") = 2, "GetColumns(" + lcT1 + "): " + TRANSFORM(This.ColCount("c_frq")) + " " + TRANSFORM(loDb.cLastError))
+		IF USED("c_frq")
+			SELECT c_frq
+			LOCATE FOR LOWER(ALLTRIM(name)) == "id"
+			This.Check(FOUND() AND primary_key, "GetColumns(" + lcT1 + ") does not mark id as primary_key")
+		ENDIF
+		This.Check(LOWER(STRTRAN(loDb.GetPrimaryKey(lcT1), " ", "")) == "id", "GetPrimaryKey(" + lcT1 + ") = '" + loDb.GetPrimaryKey(lcT1) + "'")
+		This.Check(loDb.GetColumns(lcT2, "c_frq") AND This.ColCount("c_frq") = 3, "GetColumns(" + lcT2 + "): " + TRANSFORM(This.ColCount("c_frq")) + " " + TRANSFORM(loDb.cLastError))
+		This.Check(LOWER(STRTRAN(loDb.GetPrimaryKey(lcT2), " ", "")) == "a,b", "GetPrimaryKey(" + lcT2 + ") = '" + loDb.GetPrimaryKey(lcT2) + "'")
+		USE IN SELECT("c_frq")
+		loDb.Disconnect()
+		toE.DropTable(["] + lcT1 + ["])
+		toE.DropTable(["] + lcT2 + ["])
+	ENDPROC
+
+	* A table created without quotes, asked for in lower case, upper case and mixed: the same as before.
+	PROCEDURE TestATableWithoutQuotesIsFoundInAnyCase() HELP [Fact, Trait("Category", "Metadata"), Timeout(180000)]
+		This.OnEachEngine("UnquotedInAnyCase")
+	ENDPROC
+
+	PROCEDURE UnquotedInAnyCase(toE)
+		LOCAL lcT, loDb, lnI, laAsk[3]
+		lcT = toE.NewName()
+		toE.CreateCustomers(lcT)
+		laAsk[1] = LOWER(lcT)
+		laAsk[2] = UPPER(lcT)
+		laAsk[3] = PROPER(lcT)
+		loDb = This.Connected(toE)
+		FOR lnI = 1 TO 3
+			This.Check(loDb.GetColumns(laAsk[lnI], "c_fru") AND This.ColCount("c_fru") = 6, "GetColumns(" + laAsk[lnI] + "): " + ;
+				TRANSFORM(This.ColCount("c_fru")) + " " + TRANSFORM(loDb.cLastError))
+			This.Check(LOWER(ALLTRIM(loDb.GetPrimaryKey(laAsk[lnI]))) == "id", "GetPrimaryKey(" + laAsk[lnI] + ") = '" + loDb.GetPrimaryKey(laAsk[lnI]) + "'")
+		ENDFOR
+		USE IN SELECT("c_fru")
+		loDb.Disconnect()
+		toE.DropTable(lcT)
+	ENDPROC
+
+	* Two tables whose names differ only in case (one created without quotes, one quoted in the
+	* other case): each gives its own columns; a name that neither has exactly goes to the natural one.
+	PROCEDURE TestTwoTablesThatDifferOnlyInCaseGiveTheirOwnColumns() HELP [Fact, Trait("Category", "Metadata"), Timeout(180000)]
+		This.OnEachEngine("TwoTablesByCase", "firebird,postgresql")
+	ENDPROC
+
+	PROCEDURE TwoTablesByCase(toE)
+		LOCAL lcN, lcNat, lcOther, loDb
+		lcN = toE.NewName("frc")
+		lcNat = IIF(toE.cName == "firebird", UPPER(lcN), LOWER(lcN))
+		lcOther = This.OtherCase(toE, lcN)
+		This.Check(toE.RawRun("CREATE TABLE " + lcN + " (id INTEGER NOT NULL PRIMARY KEY, x INTEGER)"), toE.cLastError)
+		This.Check(toE.RawRun("CREATE TABLE " + ["] + lcOther + ["] + " (k INTEGER NOT NULL PRIMARY KEY, y INTEGER, z INTEGER)"), toE.cLastError)
+		loDb = This.Connected(toE)
+		This.Check(loDb.GetColumns(lcOther, "c_frc") AND This.ColCount("c_frc") = 3, "GetColumns(" + lcOther + "): " + TRANSFORM(This.ColCount("c_frc")))
+		This.Check(LOWER(ALLTRIM(loDb.GetPrimaryKey(lcOther))) == "k", "GetPrimaryKey(" + lcOther + ") = '" + loDb.GetPrimaryKey(lcOther) + "'")
+		This.Check(loDb.GetColumns(lcNat, "c_frc") AND This.ColCount("c_frc") = 2, "GetColumns(" + lcNat + "): " + TRANSFORM(This.ColCount("c_frc")))
+		This.Check(LOWER(ALLTRIM(loDb.GetPrimaryKey(lcNat))) == "id", "GetPrimaryKey(" + lcNat + ") = '" + loDb.GetPrimaryKey(lcNat) + "'")
+		This.Check(loDb.GetColumns(PROPER(lcN), "c_frc") AND This.ColCount("c_frc") = 2, "GetColumns(" + PROPER(lcN) + "): " + TRANSFORM(This.ColCount("c_frc")))
+		USE IN SELECT("c_frc")
+		loDb.Disconnect()
+		toE.DropTable(lcN)
+		toE.DropTable(["] + lcOther + ["])
+	ENDPROC
+
+	* The name in the case the engine does not write by itself.
+	FUNCTION OtherCase(toE, tcName)
+		RETURN IIF(toE.cName == "firebird", LOWER(tcName), UPPER(tcName))
+	ENDFUNC
+
+	FUNCTION ColCount(tcAlias)
+		RETURN IIF(USED(tcAlias), RECCOUNT(tcAlias), -1)
+	ENDFUNC
+	* Open for writing a table whose name is passed between quotes, in the case the engine does not
+	* write by itself: it finds the key, and Save() writes the change.
+	PROCEDURE TestOpenForWritingATableQuotedInTheOtherCase() HELP [Fact, Trait("Category", "Save"), Timeout(180000)]
+		This.OnEachEngine("OpenQuotedInTheOtherCase", "firebird,postgresql")
+	ENDPROC
+
+	PROCEDURE OpenQuotedInTheOtherCase(toE)
+		LOCAL lcT, lcQ, loDb, llOk
+		lcT = This.OtherCase(toE, toE.NewName("fro"))
+		lcQ = ["] + lcT + ["]
+		This.Check(toE.RawRun("CREATE TABLE " + lcQ + " (id INTEGER NOT NULL PRIMARY KEY, nm VARCHAR(10))"), toE.cLastError)
+		This.Check(toE.RawRun("INSERT INTO " + lcQ + " (id, nm) VALUES (1, 'old')"), toE.cLastError)
+		loDb = This.Connected(toE)
+		This.Check(loDb.Open(lcQ, "c_fro"), "Open(" + lcQ + ") failed: " + TRANSFORM(loDb.cLastError))
+		IF USED("c_fro")
+			SELECT c_fro
+			REPLACE nm WITH "new"
+			llOk = loDb.Save("c_fro")
+			This.Check(llOk, "Save() failed: " + TRANSFORM(loDb.cLastError))
+			This.Check(RTRIM(TRANSFORM(toE.RawScalar("SELECT nm FROM " + lcQ + " WHERE id = 1"))) == "new", "on the server: " + ;
+				TRANSFORM(toE.RawScalar("SELECT nm FROM " + lcQ + " WHERE id = 1")))
+		ENDIF
+		loDb.CloseAll()
+		loDb.Disconnect()
+		toE.DropTable(lcQ)
+	ENDPROC
 ENDDEFINE

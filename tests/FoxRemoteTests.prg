@@ -591,7 +591,7 @@ DEFINE CLASS TestRemoteSql AS Custom
 	PROCEDURE TestDefaults() HELP [Fact, Trait("Category", "Offline")]
 		LOCAL loDb
 		loDb = CREATEOBJECT("RemotePostgreSql")
-		__assert.Equal("1.2.0", loDb.cVersion)
+		__assert.Equal("1.2.1", loDb.cVersion)
 		__assert.Equal(0, loDb.nErrors)
 		__assert.False(loDb.lStrict)
 		__assert.Equal("null", loDb.cEmptyDateMode)

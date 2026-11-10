@@ -1,0 +1,259 @@
+Integration: FoxRemote 1.2.1 against SQLite 3.43, SQL Server 2025 Express (ODBC Driver 17.10), MariaDB 11.8, MySQL 8.4 (MariaDB Connector/ODBC 3.2), PostgreSQL 18, Firebird 5.0.4 (10-11-2026)
+foxproof run --prg tests\FoxRemoteIntegrationTests.prg
+
+  TestRemoteIntegration
+    ok    TestConnectDoesNotCreateAMissingDatabase  657ms
+    ok    TestCreateDatabaseThenConnect  1750ms
+    ok    TestConnectLandsInTheRequestedDatabase  813ms
+    ok    TestConnectWithASemicolonInThePassword  250ms
+    ok    TestConnectWithWindowsAuthentication  78ms
+    ok    TestConnectDoesNotChangeGlobalSettings  297ms
+    ok    TestConnectFailureIsReportedWithoutADialog  406ms
+    ok    TestErrorsAreCountedWithCodeAndStatement  281ms
+    ok    TestStrictModeThrows  250ms
+    ok    TestQueryWithNamedParametersFromLocals  1250ms
+    ok    TestQueryWithACustomBasedParamsObject  1046ms
+    ok    TestQueryWithAMissingParameterFails  1016ms
+    ok    TestQueryWithParameterPairs  844ms
+    ok    TestExecuteAndScalarWithPairs  1531ms
+    ok    TestOpenWithParamsHelper  1422ms
+    ok    TestQueryWithAQuestionMarkVariableFails  1359ms
+    ok    TestScalarReturnsNumbers  1078ms
+    ok    TestExecuteReturnsAffectedRows  1281ms
+    ok    TestTransactionCommitPersists  922ms
+    ok    TestTransactionRollbackUndoes  1000ms
+    ok    TestDisconnectWithAnOpenTransactionRollsBack  984ms
+    ok    TestSaveInsertIsCommittedAndReturnsTheId  1391ms
+    ok    TestSaveInsertIntoATableWithATrigger  844ms
+    ok    TestSaveUpdatesOnlyTheChangedColumns  1766ms
+    ok    TestSaveOfAValueWrittenAgainSucceeds  1187ms
+    ok    TestSaveDeletesTheRow  1813ms
+    ok    TestSaveFailureReturnsFalseAndKeepsTheEdits  1235ms
+    ok    TestSaveOfAnUnknownAliasLeavesNoTransactionOpen  1000ms
+    ok    TestSaveOfAReadOnlyCursorKeepsTheSettings  813ms
+    ok    TestSaveGroupSendsEveryCursor  2203ms
+    ok    TestOpenForWritingWithoutAPrimaryKeyIsRefused  781ms
+    ok    TestCloseGroupThenReopenTheSameAlias  828ms
+    ok    TestRefreshReloadsAReadOnlyCursor  1172ms
+    ok    TestRefreshRefusesWithPendingChanges  1156ms
+    ok    TestCloseAllLeavesTheUsersCursorsOpen  781ms
+    ok    TestOpenViewWithoutATableIsReadOnly  3375ms
+    ok    TestOpenViewRejectsANonSelect  1453ms
+    ok    TestOpenViewRefreshKeepsTheParameters  2984ms
+    ok    TestOpenViewUpdatesOnlyTheBaseTable  2797ms
+    ok    TestOpenViewInsertGetsTheId  2984ms
+    ok    TestOpenViewDeletesTheRow  2734ms
+    ok    TestOpenViewRefusesAKeyMissingFromTheSelect  2313ms
+    ok    TestOpenViewRefusesAnEditToAJoinedColumn  2813ms
+    ok    TestOpenViewInAGroupSavesWithTheOthers  2828ms
+    ok    TestOpenViewDetectsAConflict  3640ms
+    ok    TestOpenViewRefusesASelectWithoutAResultSet  953ms
+    ok    TestAccentedTextRoundTrip  1125ms
+    ok    TestAccentedTextInTheSqlRoundTrip  844ms
+    ok    TestSaveDoesNotPadVarchar  1156ms
+    ok    TestLongTextRoundTrip  984ms
+    ok    TestEmptyDateIsStoredAsNull  1344ms
+    ok    TestServerTextIsNotUcs2  234ms
+    ok    TestGetPrimaryKey  781ms
+    ok    TestGetTablesReturnsACursor  1562ms
+    ok    TestGetDatabasesListsTheConnectedOne  297ms
+    ok    TestGetObjectsListsTablesAndViews  1313ms
+    ok    TestGetColumnsReturnsACursor  907ms
+    ok    TestGetColumnsKeepsTheServersNames  797ms
+    ok    TestLastIdAfterExecute  1438ms
+    ok    TestMigrateRefusesAnExistingTable  1172ms
+    ok    TestMigrateReplaceCopiesRowsWithUsableNames  1219ms
+    ok    TestMigrateOfAFolderKeepsTheDefaultDirectory  719ms
+    ok    TestCreateTableFromCursorKeepsCharacterColumns  562ms
+    ok    TestCreateTableWithIndexAndForeignKey  2594ms
+    ok    TestQueryAfterTheServerDroppedTheConnection  7406ms
+    ok    TestWriteAfterAnIdleConnectionWasDropped  7235ms
+    ok    TestWriteWhenTheConnectionDropsIsNotRepeated  7218ms
+    ok    TestConnectionLostInsideATransaction  7109ms
+    ok    TestConnectionLostWithoutAutoReconnect  6782ms
+    ok    TestSaveDetectsAConflict  1453ms
+    ok    TestConflictDetectionAllowsOtherChanges  1407ms
+    ok    TestNextNumberCountsUp  1968ms
+    ok    TestNextNumberHoldsTheRowUntilCommit  13485ms
+    ok    TestHasChangesAndCloseWithChanges  1390ms
+    ok    TestStrictSaveFailureLeavesNoTransactionOpen  1172ms
+    ok    TestLibraryHasNoUserInterface  15ms
+    ok    TestATableQuotedInTheOtherCaseGivesItsColumnsAndKey  625ms
+    ok    TestATableWithoutQuotesIsFoundInAnyCase  906ms
+    ok    TestTwoTablesThatDifferOnlyInCaseGiveTheirOwnColumns  500ms
+    ok    TestOpenForWritingATableQuotedInTheOtherCase  516ms
+
+  80 passed, 0 failed, 0 skipped  (142594ms)
+
+Without a server: foxproof run --prg tests\FoxRemoteTests.prg
+
+  TestRemoteSql
+    ok    TestTypesSqlServer  31ms
+    ok    TestTypesMySql  0ms
+    ok    TestTypesMariaDb  0ms
+    ok    TestTypesPostgreSql  0ms
+    ok    TestTypesFirebird  0ms
+    ok    TestTypesSqlite  0ms
+    ok    TestTypeOfAZeroWidthCharacterIsOne  0ms
+    ok    TestNumericPrecisionIsCappedAt38  0ms
+    ok    TestNamesAreLowerCaseInPostgreSqlMySqlAndSqlite  0ms
+    ok    TestNamesAreUpperCaseInFirebird  15ms
+    ok    TestNamesAreKeptInSqlServer  0ms
+    ok    TestPublicMethodsAreTheDocumentedOnes  0ms
+    ok    TestNamesFromVfpAreLowerCaseInSqlServer  0ms
+    ok    TestPrimaryKeyQueriesUseThePlainName  0ms
+    ok    TestPrimaryKeyQueryEscapesQuotes  15ms
+    ok    TestCreateTableColumnsAreNullableByDefault  16ms
+    ok    TestCreateTableNotNullAndDefault  0ms
+    ok    TestCreateTableCompositePrimaryKey  0ms
+    ok    TestCreateTableAutoIncrementColumn  0ms
+    ok    TestCreateTableHasNoAutomaticKeyByDefault  0ms
+    ok    TestCreateTableWithAutoKeyName  0ms
+    ok    TestCreateTableNamesAreUpperCaseInFirebird  0ms
+    ok    TestCreateTableNeverQuotesNames  0ms
+    ok    TestForeignKeyWithActions  16ms
+    ok    TestForeignKeyActionShortcuts  0ms
+    ok    TestForeignKeyRestrictIsNoActionInSqlServer  0ms
+    ok    TestForeignKeyWithoutActions  0ms
+    ok    TestCompositeForeignKey  0ms
+    ok    TestIndexesFollowTheTable  0ms
+    ok    TestConnectionStringSqlServer  0ms
+    ok    TestConnectionStringSqlServerPortGoesAfterAComma  0ms
+    ok    TestConnectionStringSqlServerWindowsAuthentication  0ms
+    ok    TestConnectionValueWithASemicolonIsBraced  0ms
+    ok    TestConnectionValueWithABraceIsDoubled  0ms
+    ok    TestConnectionValueWithEqualsOrBlanksIsBraced  0ms
+    ok    TestConnectionStringPortHasNoDecimals  15ms
+    ok    TestConnectionStringPostgreSqlDefaults  0ms
+    ok    TestConnectionStringMySqlWithoutPort  15ms
+    ok    TestConnectionStringFirebird  0ms
+    ok    TestConnectionStringSqlite  16ms
+    ok    TestConnectionStringSqlitePathWithASemicolonIsAnUri  0ms
+    ok    TestConnectionOptionsAreAppended  0ms
+    ok    TestFirebirdLocalPathForTheExistenceCheck  0ms
+    ok    TestParameterIsTranslated  0ms
+    ok    TestSeveralParameters  0ms
+    ok    TestParameterInsideQuotesIsLeftAlone  0ms
+    ok    TestPostgreSqlCastIsLeftAlone  0ms
+    ok    TestColonBeforeADigitIsNotAParameter  0ms
+    ok    TestSqlWithoutParametersIsUnchanged  16ms
+    ok    TestSqliteParametersGoAsUtf8  0ms
+    ok    TestOtherEnginesParametersAreNotConverted  0ms
+    ok    TestInsertSqlServerReadsScopeIdentity  0ms
+    ok    TestInsertReturningEngines  0ms
+    ok    TestMySqlDoesNotReturn  0ms
+    ok    TestInsertWithoutColumnsUsesDefaultValues  0ms
+    ok    TestTextIsTrimmedOnSave  15ms
+    ok    TestEmptyDateIsNullWhenNullable  0ms
+    ok    TestEmptyDateIsTheMinimumWhenNotNullable  0ms
+    ok    TestEmptyDateModeMin  0ms
+    ok    TestValuesThatTravelAsTheyAre  0ms
+    ok    TestBigIntTextBecomesANumber  16ms
+    ok    TestOtherTextStaysText  0ms
+    ok    TestMinimumDates  0ms
+    ok    TestDefaults  0ms
+    ok    TestExecuteWithoutAConnection  0ms
+    ok    TestStrictRaisesWithoutAConnection  0ms
+    ok    TestClearErrors  0ms
+    ok    TestSaveOfAnAliasNotOpenedByFoxRemote  0ms
+    ok    TestTransactionsNeedAConnection  15ms
+    ok    TestSqliteConnectToAMissingFile  0ms
+    ok    TestAttachNeedsAHandle  0ms
+    ok    TestMigrateOfNothing  0ms
+    ok    TestOpenNeedsATable  0ms
+    ok    TestParamsKeepsTheSevenTypes  0ms
+    ok    TestParamsWithAnOddCountFails  0ms
+    ok    TestParamsWithABadNameFails  0ms
+    ok    TestParamsWithANameTwiceFails  0ms
+    ok    TestParamsWithAnArrayFails  16ms
+    ok    TestParamsOfAnObjectThenMoreFails  0ms
+    ok    TestMalformedPairsFailBeforeTheServer  0ms
+    ok    TestAQuestionMarkVariableFails  0ms
+    ok    TestNoPrimaryKeySaysTheWayOut  0ms
+    ok    TestGenerateScriptOfADbf  15ms
+    ok    TestGenerateScriptOfAFolder  0ms
+    ok    TestGenerateScriptLeavesTheDefaultFolder  0ms
+
+  85 passed, 0 failed, 0 skipped  (232ms)
+
+Red of three new Metadata tests against 1.2.0 (afa6bd5), every engine: a table quoted in the other case is not
+found by GetColumns and has no key, and of two tables that differ only in case the quoted one gives the columns of
+the other. The table without quotes, asked for in any case, passes before and after.
+
+  TestRemoteIntegration
+    FAIL  TestATableQuotedInTheOtherCaseGivesItsColumnsAndKey  563ms
+          [postgresql] GetColumns(FRQ7LS10T4KX): -1 statement failed: ERROR: no existe la relación «frq7ls10t4kx»; Error while executing the query
+[postgresql] GetPrimaryKey(FRQ7LS10T4KX) = ''
+[postgresql] GetColumns(FRQ7LS10T4KY): -1 statement failed: ERROR: no existe la relación «frq7ls10t4ky»; Error while executing the query
+[postgresql] GetPrimaryKey(FRQ7LS10T4KY) = ''
+[firebird] GetColumns(frq7ls10t4ra): -1 statement failed: [ODBC Firebird Driver][Firebird]Dynamic SQL Error -SQL error code = -204 -Table unknown -FRQ7LS10T4RA -At line 1, column 15
+[firebird] GetPrimaryKey(frq7ls10t4ra) = ''
+[firebird] GetColumns(frq7ls10t4rb): -1 statement failed: [ODBC Firebird Driver][Firebird]Dynamic SQL Error -SQL error code = -204 -Table unknown -FRQ7LS10T4RB -At line 1, column 15
+[firebird] GetPrimaryKey(frq7ls10t4rb) = ''
+
+
+  0 passed, 1 failed, 0 skipped  (563ms)
+
+  TestRemoteIntegration
+    FAIL  TestTwoTablesThatDifferOnlyInCaseGiveTheirOwnColumns  547ms
+          [postgresql] GetColumns(FRC7LS10T5Q7): 2
+[postgresql] GetPrimaryKey(FRC7LS10T5Q7) = 'id'
+[firebird] GetColumns(frc7ls10t5x3): 2
+[firebird] GetPrimaryKey(frc7ls10t5x3) = 'ID'
+
+
+  0 passed, 1 failed, 0 skipped  (547ms)
+
+  TestRemoteIntegration
+    ok    TestATableWithoutQuotesIsFoundInAnyCase  1063ms
+
+  1 passed, 0 failed, 0 skipped  (1063ms)
+
+A1, GetPrimaryKey() with NaturalName() only, as in 1.2.0 (the key of a table quoted in the other case is not found),
+and the same test with 1.2.1:
+
+  TestRemoteIntegration
+    FAIL  TestATableQuotedInTheOtherCaseGivesItsColumnsAndKey  532ms
+          [postgresql] GetColumns(FRQ7LS10TH4W) does not mark id as primary_key
+[postgresql] GetPrimaryKey(FRQ7LS10TH4W) = ''
+[postgresql] GetPrimaryKey(FRQ7LS10TH4X) = ''
+[firebird] GetColumns(frq7ls10thbs) does not mark id as primary_key
+[firebird] GetPrimaryKey(frq7ls10thbs) = ''
+[firebird] GetPrimaryKey(frq7ls10thbt) = ''
+
+
+  0 passed, 1 failed, 0 skipped  (532ms)
+
+  TestRemoteIntegration
+    ok    TestATableQuotedInTheOtherCaseGivesItsColumnsAndKey  703ms
+
+  1 passed, 0 failed, 0 skipped  (703ms)
+
+Red of TestOpenForWritingATableQuotedInTheOtherCase against the first change (300166a): Open() of a name between
+quotes looked the key up with the quotes, found none and refused to open the table for writing.
+
+  TestRemoteIntegration
+    FAIL  TestOpenForWritingATableQuotedInTheOtherCase  469ms
+          [postgresql] Open("FRO7LS118YZR") failed: a table without a primary key can only be opened read-only: "FRO7LS118YZR"; set cAutoKeyName before creating the table, or open it with lReadOnly
+[firebird] Open("fro7ls118z4x") failed: a table without a primary key can only be opened read-only: "fro7ls118z4x"; set cAutoKeyName before creating the table, or open it with lReadOnly
+
+
+  0 passed, 1 failed, 0 skipped  (469ms)
+
+GetColumns() of one table in a database with 2,000 tables (frp_1000, the mean of 20 calls, asked for as it was
+created and in upper case), with 1.2.0 (afa6bd5), with the first change (300166a, which read the whole list of
+tables on every call) and with 1.2.1, which asks the catalog for that one name, and only when it is not already in
+the case the engine writes:
+
+  sqlite | 1.2.0   | GetColumns(frp_1000):     0.2 ms, 2 columns
+  sqlite | 1.2.0   | GetColumns(FRP_1000):     0.7 ms, 2 columns
+  postgresql | 1.2.0   | GetColumns(frp_1000):     1.0 ms, 2 columns
+  postgresql | 1.2.0   | GetColumns(FRP_1000):     0.7 ms, 2 columns
+  sqlite | 300166a | GetColumns(frp_1000):    35.0 ms, 2 columns
+  sqlite | 300166a | GetColumns(FRP_1000):    38.7 ms, 2 columns
+  postgresql | 300166a | GetColumns(frp_1000):    23.8 ms, 2 columns
+  postgresql | 300166a | GetColumns(FRP_1000):    25.4 ms, 2 columns
+  sqlite | 1.2.1   | GetColumns(frp_1000):     0.6 ms, 2 columns
+  sqlite | 1.2.1   | GetColumns(FRP_1000):     1.7 ms, 2 columns
+  postgresql | 1.2.1   | GetColumns(frp_1000):     0.1 ms, 2 columns
+  postgresql | 1.2.1   | GetColumns(FRP_1000):     1.9 ms, 2 columns

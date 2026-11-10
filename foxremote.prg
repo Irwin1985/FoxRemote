@@ -1,4 +1,4 @@
-* FoxRemote 1.2: one API for remote databases from Visual FoxPro 9, through ODBC.
+* FoxRemote 1.2.1: one API for remote databases from Visual FoxPro 9, through ODBC.
 * Engines: SQL Server, MySQL, MariaDB, PostgreSQL, Firebird and SQLite.
 * License: MIT. Manual: README.md.
 *
@@ -25,7 +25,7 @@ RETURN
 * RemoteDatabase: what every engine shares.
 * ======================================================================== *
 DEFINE CLASS RemoteDatabase AS Custom
-	cVersion = "1.2.0"
+	cVersion = "1.2.1"
 	cEngine = ""
 
 	* Connection
@@ -1672,6 +1672,64 @@ DEFINE CLASS RemoteDatabase AS Custom
 		RETURN IIF(This.cNameCase == "asis", LOWER(ALLTRIM(tcName)), This.NaturalName(tcName))
 	ENDFUNC
 
+	* The name of a table or view as the catalog has it, when one has exactly tcTable as its name,
+	* case included; "" when none has, and the name then goes as it always went. A name already in
+	* the case the engine writes is not looked up: without quotes it reaches that same table. A
+	* name between the quotes of the engine is looked up without them.
+	PROTECTED FUNCTION ExactName(tcTable)
+		LOCAL lcName, lcOut, lcSql, loErr, llQuoted
+		lcName = ALLTRIM(tcTable)
+		llQuoted = This.IsQuoted(lcName)
+		IF llQuoted
+			lcName = This.Unquote(lcName)
+		ENDIF
+		DO CASE
+			CASE EMPTY(lcName)
+				RETURN ""
+			CASE This.NaturalName(lcName) == lcName AND !(" " $ lcName)
+				RETURN IIF(llQuoted, lcName, "")
+		ENDCASE
+		lcOut = ""
+		lcSql = This.ExactNameSql(lcName)
+		IF EMPTY(lcSql)
+			RETURN ""
+		ENDIF
+		TRY
+			IF This.Query(lcSql, "c_fr_exact")
+				IF RECCOUNT("c_fr_exact") > 0
+					lcOut = lcName
+				ENDIF
+				USE IN c_fr_exact
+			ENDIF
+		CATCH TO loErr
+			lcOut = ""
+		ENDTRY
+		RETURN lcOut
+	ENDFUNC
+
+	* One row when a table or view of the current database has exactly tcName as its name.
+	PROTECTED FUNCTION ExactNameSql(tcName)
+		RETURN ""
+	ENDFUNC
+
+	PROTECTED FUNCTION IsQuoted(tcName)
+		RETURN LEN(tcName) > 2 AND LEFT(tcName, 1) == ["] AND RIGHT(tcName, 1) == ["]
+	ENDFUNC
+
+	PROTECTED FUNCTION Unquote(tcName)
+		RETURN STRTRAN(SUBSTR(tcName, 2, LEN(tcName) - 2), [""], ["])
+	ENDFUNC
+
+	* A name between the quotes of the engine.
+	PROTECTED FUNCTION QuoteIdent(tcName)
+		RETURN ["] + STRTRAN(tcName, ["], [""]) + ["]
+	ENDFUNC
+
+	* An exact name of the catalog as PrimaryKeySql and ColumnNamesSql take it.
+	PROTECTED FUNCTION CatalogKey(tcName)
+		RETURN tcName
+	ENDFUNC
+
 	* A name as the engine writes it when it is not quoted.
 	FUNCTION NaturalName(tcName)
 		DO CASE
@@ -1727,7 +1785,9 @@ DEFINE CLASS RemoteDatabase AS Custom
 	FUNCTION GetPrimaryKey(tcTable)
 		LOCAL lcKey
 		lcKey = ""
-		IF !This.Query(This.PrimaryKeySql(This.NaturalName(tcTable)), "c_fr_pk")
+		LOCAL lcExact
+		lcExact = This.ExactName(tcTable)
+		IF !This.Query(This.PrimaryKeySql(IIF(EMPTY(lcExact), This.NaturalName(tcTable), This.CatalogKey(lcExact))), "c_fr_pk")
 			RETURN ""
 		ENDIF
 		SELECT c_fr_pk
@@ -1811,9 +1871,10 @@ DEFINE CLASS RemoteDatabase AS Custom
 
 	* A cursor with one row per column: name, type (VFP), width, decimals, nullable, primary_key.
 	FUNCTION GetColumns(tcTable, tcCursor)
-		LOCAL lcCursor, laF[1], lnI, lnN, lcKey, laNames[1], lnNames
+		LOCAL lcCursor, laF[1], lnI, lnN, lcKey, laNames[1], lnNames, lcExact
 		lcCursor = IIF(EMPTY(tcCursor), "c_fr_columns", tcCursor)
-		IF !This.Query("SELECT * FROM " + tcTable + " WHERE 1 = 0", "c_fr_col_raw")
+		lcExact = This.ExactName(tcTable)
+		IF !This.Query("SELECT * FROM " + IIF(EMPTY(lcExact), tcTable, This.QuoteIdent(lcExact)) + " WHERE 1 = 0", "c_fr_col_raw")
 			RETURN .F.
 		ENDIF
 		lnN = AFIELDS(laF, "c_fr_col_raw")
@@ -1834,8 +1895,9 @@ DEFINE CLASS RemoteDatabase AS Custom
 	* (AFIELDS() gives them in capitals, so their case is lost.)
 	PROTECTED FUNCTION ServerColumnNames(tcTable, taNames)
 		EXTERNAL ARRAY taNames
-		LOCAL lcSql, lnN
-		lcSql = This.ColumnNamesSql(This.NaturalName(tcTable))
+		LOCAL lcSql, lnN, lcExact
+		lcExact = This.ExactName(tcTable)
+		lcSql = This.ColumnNamesSql(IIF(EMPTY(lcExact), This.NaturalName(tcTable), This.CatalogKey(lcExact)))
 		IF EMPTY(lcSql) OR !This.Query(lcSql, "c_fr_cn")
 			RETURN 0
 		ENDIF
@@ -2421,6 +2483,26 @@ DEFINE CLASS RemoteSqlServer AS RemoteDatabase
 	PROTECTED FUNCTION BlobType
 		RETURN "VARBINARY(MAX)"
 	ENDFUNC
+
+	PROTECTED FUNCTION QuoteIdent(tcName)
+		RETURN "[" + STRTRAN(tcName, "]", "]]") + "]"
+	ENDFUNC
+
+	PROTECTED FUNCTION CatalogKey(tcName)
+		RETURN This.QuoteIdent(tcName)
+	ENDFUNC
+
+	PROTECTED FUNCTION ExactNameSql(tcName)
+		RETURN "SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = '" + STRTRAN(tcName, "'", "''") + "' COLLATE Latin1_General_BIN"
+	ENDFUNC
+
+	PROTECTED FUNCTION IsQuoted(tcName)
+		RETURN LEN(tcName) > 2 AND LEFT(tcName, 1) == "[" AND RIGHT(tcName, 1) == "]"
+	ENDFUNC
+
+	PROTECTED FUNCTION Unquote(tcName)
+		RETURN STRTRAN(SUBSTR(tcName, 2, LEN(tcName) - 2), "]]", "]")
+	ENDFUNC
 ENDDEFINE
 
 * ======================================================================== *
@@ -2514,6 +2596,23 @@ DEFINE CLASS RemoteMySql AS RemoteDatabase
 	PROTECTED FUNCTION BlobType
 		RETURN "LONGBLOB"
 	ENDFUNC
+
+	PROTECTED FUNCTION QuoteIdent(tcName)
+		RETURN "`" + STRTRAN(tcName, "`", "``") + "`"
+	ENDFUNC
+
+	PROTECTED FUNCTION ExactNameSql(tcName)
+		RETURN "SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND CAST(TABLE_NAME AS BINARY) = CAST('" + ;
+			STRTRAN(tcName, "'", "''") + "' AS BINARY)"
+	ENDFUNC
+
+	PROTECTED FUNCTION IsQuoted(tcName)
+		RETURN LEN(tcName) > 2 AND LEFT(tcName, 1) == "`" AND RIGHT(tcName, 1) == "`"
+	ENDFUNC
+
+	PROTECTED FUNCTION Unquote(tcName)
+		RETURN STRTRAN(SUBSTR(tcName, 2, LEN(tcName) - 2), "``", "`")
+	ENDFUNC
 ENDDEFINE
 
 * MariaDB 10.5 and later: INSERT ... RETURNING.
@@ -2586,6 +2685,14 @@ DEFINE CLASS RemotePostgreSql AS RemoteDatabase
 
 	PROTECTED FUNCTION BlobType
 		RETURN "BYTEA"
+	ENDFUNC
+
+	PROTECTED FUNCTION CatalogKey(tcName)
+		RETURN This.QuoteIdent(tcName)
+	ENDFUNC
+
+	PROTECTED FUNCTION ExactNameSql(tcName)
+		RETURN "SELECT 1 FROM information_schema.tables WHERE table_schema = current_schema() AND table_name = '" + STRTRAN(tcName, "'", "''") + "'"
 	ENDFUNC
 ENDDEFINE
 
@@ -2707,6 +2814,10 @@ DEFINE CLASS RemoteFirebird AS RemoteDatabase
 	PROTECTED FUNCTION TextType
 		RETURN "BLOB SUB_TYPE TEXT"
 	ENDFUNC
+
+	PROTECTED FUNCTION ExactNameSql(tcName)
+		RETURN "SELECT 1 FROM RDB$RELATIONS WHERE RDB$RELATION_NAME = '" + STRTRAN(tcName, "'", "''") + "'"
+	ENDFUNC
 ENDDEFINE
 
 * ======================================================================== *
@@ -2804,6 +2915,10 @@ DEFINE CLASS RemoteSqlite AS RemoteDatabase
 
 	PROTECTED FUNCTION BooleanType
 		RETURN "INTEGER"
+	ENDFUNC
+
+	PROTECTED FUNCTION ExactNameSql(tcName)
+		RETURN "SELECT 1 FROM sqlite_master WHERE type IN ('table', 'view') AND name = '" + STRTRAN(tcName, "'", "''") + "'"
 	ENDFUNC
 ENDDEFINE
 
